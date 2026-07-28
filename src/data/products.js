@@ -1,7 +1,9 @@
 export const categories = [
-  { id: 'new-box', name: 'New Carton Boxes' },
-  { id: 'old-box', name: 'Used Carton Boxes' },
-  { id: 'tape', name: 'Packaging Tape' }
+  { id: 'new-box', name: 'New Carton Boxes', image: '/new-boxes.png' },
+  { id: 'old-box', name: 'Used Carton Boxes', image: '/used-boxes.png' },
+  { id: 'tape', name: 'Packaging Tape', image: '/tape.png' },
+  { id: 'shrink-roll', name: 'Shrink Roll', image: '/shrink-roll.jpg' },
+  { id: 'bubble-wrap', name: 'Bubble Wrap', image: '/bubble-wrap.jpg' }
 ];
 
 export const products = [
@@ -103,6 +105,46 @@ export const products = [
     stock: 5000,
     description: 'Eco-friendly brown paper tape with strong adhesion. Blends perfectly with carton boxes for a seamless look.',
     customizable: true
+  },
+  {
+    id: 'sr-001',
+    name: 'Industrial Shrink Wrap Roll',
+    category: 'shrink-roll',
+    price: 800,
+    bulkPricing: [
+      { minQty: 20, price: 750 },
+      { minQty: 50, price: 700 }
+    ],
+    dimensions: '500mm x 300m',
+    ply: 'N/A',
+    material: 'LLDPE',
+    condition: 'New',
+    images: [
+      '/shrink-roll.jpg'
+    ],
+    stock: 500,
+    description: 'High-clarity, stretchable film used for securing items tightly onto pallets and protecting them from dust and moisture.',
+    customizable: false
+  },
+  {
+    id: 'bw-001',
+    name: 'Protective Bubble Wrap Roll',
+    category: 'bubble-wrap',
+    price: 1200,
+    bulkPricing: [
+      { minQty: 10, price: 1100 },
+      { minQty: 30, price: 1000 }
+    ],
+    dimensions: '1m x 100m',
+    ply: 'N/A',
+    material: 'Polyethylene',
+    condition: 'New',
+    images: [
+      '/bubble-wrap.jpg'
+    ],
+    stock: 200,
+    description: 'Lightweight and durable bubble wrap designed to provide excellent cushioning and protection for fragile items during transit.',
+    customizable: false
   }
 ];
 

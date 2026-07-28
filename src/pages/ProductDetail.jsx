@@ -1,221 +1,272 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useCartStore } from '../store/useCartStore';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Check, Minus, Plus, ShoppingCart, Truck, ShieldCheck, Ruler } from 'lucide-react';
 import { products } from '../data/products';
-import { ArrowLeft, Check, Minus, Plus, ShoppingCart, Truck, ShieldCheck, Box } from 'lucide-react';
+import { useCartStore } from '../store/useCartStore';
 import CustomizeOrderForm from '../components/CustomizeOrderForm';
 import clsx from 'clsx';
 
 export default function ProductDetail() {
   const { id } = useParams();
-  const product = products.find(p => p.id === id);
-  const addToCart = useCartStore(state => state.addToCart);
-
-  const [mainImage, setMainImage] = useState(product?.images[0]);
+  const product = products.find((p) => p.id === id);
+  const addToCart = useCartStore((state) => state.addItem);
+  
   const [quantity, setQuantity] = useState(1);
-  const [showToast, setShowToast] = useState(false);
-
-  useEffect(() => {
-    if (product) {
-      setMainImage(product.images[0]);
-      setQuantity(1);
-    }
-  }, [product]);
+  const [activeImage, setActiveImage] = useState(0);
+  const [isAdded, setIsAdded] = useState(false);
+  const [showCustomForm, setShowCustomForm] = useState(false);
 
   if (!product) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Product Not Found</h2>
-          <Link to="/shop/new-box" className="text-primary hover:underline">Return to Shop</Link>
-        </div>
+      <div className="min-h-screen pt-32 pb-20 flex flex-col items-center justify-center text-center">
+        <h2 className="text-4xl font-heading font-black text-secondary mb-4">Product Not Found</h2>
+        <p className="text-text-muted mb-8 text-lg">We couldn't find the product you're looking for.</p>
+        <Link to="/shop/all" className="px-8 py-4 bg-primary text-white font-bold rounded-2xl shadow-lg hover:shadow-primary/50 transition-all hover:-translate-y-1">
+          Return to Shop
+        </Link>
       </div>
     );
   }
 
-  // Calculate current price based on quantity tiers
-  const currentPrice = (() => {
-    if (!product.bulkPricing || product.bulkPricing.length === 0) return product.price;
-    let price = product.price;
-    // Sort tiers descending by minQty to find the highest applicable tier
-    const tiers = [...product.bulkPricing].sort((a, b) => b.minQty - a.minQty);
-    for (const tier of tiers) {
-      if (quantity >= tier.minQty) {
-        price = tier.price;
-        break;
+  // Calculate current price based on tier
+  const getCurrentPrice = () => {
+    let currentPrice = product.price;
+    if (product.bulkPricing) {
+      // Sort tiers by minQty descending
+      const sortedTiers = [...product.bulkPricing].sort((a, b) => b.minQty - a.minQty);
+      for (const tier of sortedTiers) {
+        if (quantity >= tier.minQty) {
+          currentPrice = tier.price;
+          break;
+        }
       }
     }
-    return price;
-  })();
+    return currentPrice;
+  };
 
   const handleAddToCart = () => {
-    addToCart({
-      ...product,
-      quantity,
-      price: currentPrice, // Store the price they got at checkout based on qty
-      isCustom: false
-    });
-    
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+    addToCart(product, quantity, getCurrentPrice());
+    setIsAdded(true);
+    setTimeout(() => setIsAdded(false), 2000);
   };
 
   return (
-    <div className="bg-white min-h-screen pb-16">
-      
-      {/* Toast Notification */}
-      <div className={clsx(
-        "fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 transition-all duration-300",
-        showToast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"
-      )}>
-        <Check className="h-5 w-5 text-green-400" />
-        <span className="font-semibold text-sm">Added {quantity} items to cart</span>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Breadcrumb */}
-        <div className="mb-6">
-          <Link to={`/shop/${product.category}`} className="inline-flex items-center text-sm font-semibold text-text-muted hover:text-primary transition-colors">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to {product.category.replace('-', ' ')}
+    <div className="bg-background min-h-screen pt-24 pb-24">
+      {/* Breadcrumb Navigation */}
+      <div className="bg-white border-b border-gray-100 py-4 mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Link to={`/shop/${product.category}`} className="inline-flex items-center text-sm font-bold text-gray-500 hover:text-primary transition-colors group">
+            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+            Back to {product.category.replace('-', ' ').toUpperCase()}
           </Link>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Main Product Layout: Overlapping Desktop Design */}
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
           
-          {/* Images */}
-          <div className="space-y-4">
-            <div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 relative group cursor-crosshair">
-              <img 
-                src={mainImage} 
-                alt={product.name} 
-                className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-500 origin-center" 
-              />
-              {product.condition === 'New' && (
-                <span className="absolute top-4 left-4 bg-primary text-white text-sm font-bold px-4 py-1 rounded-full">New</span>
+          {/* Left Column: Image Gallery */}
+          <div className="w-full lg:w-1/2">
+            <div className="sticky top-32">
+              <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 mb-6 relative aspect-square flex items-center justify-center p-8">
+                {product.condition === 'New' && (
+                  <span className="absolute top-6 left-6 z-10 bg-secondary text-white text-sm font-black px-5 py-2 rounded-full uppercase tracking-widest shadow-lg">New</span>
+                )}
+                <AnimatePresence mode="wait">
+                  <motion.img 
+                    key={activeImage}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
+                    src={product.images[activeImage]} 
+                    alt={product.name} 
+                    className="w-full h-full object-contain"
+                  />
+                </AnimatePresence>
+              </div>
+              
+              {product.images.length > 1 && (
+                <div className="flex gap-4">
+                  {product.images.map((img, idx) => (
+                    <button 
+                      key={idx} 
+                      onClick={() => setActiveImage(idx)}
+                      className={clsx(
+                        "relative w-24 h-24 rounded-2xl overflow-hidden border-2 transition-all",
+                        activeImage === idx ? "border-primary shadow-lg shadow-primary/20 scale-105" : "border-gray-200 opacity-60 hover:opacity-100 hover:border-gray-300"
+                      )}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
-            {product.images.length > 1 && (
-              <div className="flex gap-4">
-                {product.images.map((img, idx) => (
-                  <button 
-                    key={idx}
-                    onClick={() => setMainImage(img)}
-                    className={clsx(
-                      "w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors",
-                      mainImage === img ? "border-primary" : "border-transparent hover:border-gray-300"
-                    )}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* Product Info */}
-          <div className="flex flex-col">
-            <h1 className="text-3xl md:text-4xl font-heading font-bold text-text-main mb-2">{product.name}</h1>
-            <p className="text-lg text-text-muted mb-6">{product.description}</p>
+          {/* Right Column: Product Details */}
+          <div className="w-full lg:w-1/2 lg:py-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-4">
+              {product.category.replace('-', ' ')}
+            </div>
             
-            <div className="flex items-end gap-4 mb-8">
-              <span className="text-4xl font-bold text-primary">₨ {currentPrice}</span>
-              <span className="text-text-muted mb-1 font-semibold">/ unit</span>
-              {currentPrice < product.price && (
-                <span className="text-sm text-green-600 bg-green-100 px-2 py-1 rounded font-bold mb-1 ml-2">
-                  Bulk Discount Applied!
-                </span>
-              )}
+            <h1 className="text-4xl lg:text-6xl font-heading font-black text-secondary tracking-tight mb-4 leading-tight">
+              {product.name}
+            </h1>
+            
+            <div className="flex items-baseline gap-4 mb-8">
+              <span className="text-5xl font-black text-secondary">₨ {getCurrentPrice()}</span>
+              <span className="text-lg text-text-muted font-medium">/ unit</span>
             </div>
 
-            {/* Bulk Pricing Info */}
+            <p className="text-lg text-text-muted leading-relaxed font-medium mb-10 border-l-4 border-gray-200 pl-4">
+              {product.description}
+            </p>
+
+            {/* Bulk Pricing Tier Display */}
             {product.bulkPricing && product.bulkPricing.length > 0 && (
-              <div className="bg-gray-50 p-4 rounded-lg mb-8 border border-gray-200">
-                <h4 className="font-bold text-sm text-text-main mb-2 uppercase tracking-wide">Bulk Pricing Tiers</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-text-muted">1 - {product.bulkPricing[0].minQty - 1} units:</span>
-                    <span className="font-bold text-text-main">₨ {product.price} / unit</span>
+              <div className="bg-secondary/5 rounded-3xl p-6 mb-10 border border-secondary/10">
+                <h4 className="text-sm font-heading font-black text-secondary uppercase tracking-widest mb-4">Wholesale Tiers</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
+                    <div className="text-xs text-text-muted font-bold uppercase mb-1">1 - {product.bulkPricing[0].minQty - 1}</div>
+                    <div className="font-black text-secondary text-lg">₨ {product.price}</div>
                   </div>
                   {product.bulkPricing.map((tier, idx) => (
-                    <div key={idx} className="flex justify-between text-sm">
-                      <span className="text-text-muted">
-                        {tier.minQty}{idx < product.bulkPricing.length - 1 ? ` - ${product.bulkPricing[idx+1].minQty - 1}` : '+'} units:
-                      </span>
-                      <span className="font-bold text-primary">₨ {tier.price} / unit</span>
+                    <div key={idx} className={clsx(
+                      "bg-white rounded-2xl p-4 text-center shadow-sm border transition-colors",
+                      quantity >= tier.minQty ? "border-primary shadow-primary/10" : "border-gray-100"
+                    )}>
+                      <div className="text-xs text-text-muted font-bold uppercase mb-1">
+                        {tier.minQty}{idx < product.bulkPricing.length - 1 ? ` - ${product.bulkPricing[idx+1].minQty - 1}` : '+'}
+                      </div>
+                      <div className={clsx("font-black text-lg", quantity >= tier.minQty ? "text-primary" : "text-secondary")}>
+                        ₨ {tier.price}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Specs Table */}
-            <div className="mb-8 border-t border-gray-100 pt-6">
-              <h3 className="font-heading font-bold text-lg mb-4">Specifications</h3>
-              <div className="grid grid-cols-2 gap-y-3 text-sm">
-                <div className="text-text-muted font-medium">Dimensions</div>
-                <div className="font-semibold text-text-main">{product.dimensions}</div>
-                <div className="text-text-muted font-medium">Wall Strength</div>
-                <div className="font-semibold text-text-main">{product.ply}</div>
-                <div className="text-text-muted font-medium">Material</div>
-                <div className="font-semibold text-text-main">{product.material}</div>
-                <div className="text-text-muted font-medium">Condition</div>
-                <div className="font-semibold text-text-main">{product.condition}</div>
-                <div className="text-text-muted font-medium">Availability</div>
-                <div className="font-semibold text-green-600">{product.stock} in stock</div>
+            {/* Add to Cart Actions */}
+            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-10">
+              <div className="flex flex-col sm:flex-row gap-6 items-end">
+                <div className="w-full sm:w-1/3">
+                  <label className="block text-sm font-heading font-black text-secondary uppercase tracking-widest mb-3">Quantity</label>
+                  <div className="flex items-center justify-between border-2 border-gray-100 rounded-2xl p-2 bg-gray-50">
+                    <button 
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-10 h-10 flex items-center justify-center text-secondary hover:bg-gray-200 rounded-xl transition-colors"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <span className="font-bold text-xl text-secondary select-none w-16 text-center">{quantity}</span>
+                    <button 
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="w-10 h-10 flex items-center justify-center text-secondary hover:bg-gray-200 rounded-xl transition-colors"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={handleAddToCart}
+                  disabled={isAdded}
+                  className={clsx(
+                    "w-full sm:w-2/3 h-16 flex items-center justify-center gap-3 font-bold text-lg rounded-2xl transition-all",
+                    isAdded 
+                      ? "bg-green-500 text-white shadow-[0_0_20px_rgba(34,197,94,0.4)]" 
+                      : "bg-primary text-white hover:bg-primary-hover shadow-[0_0_30px_rgba(249,115,22,0.3)] hover:shadow-[0_0_40px_rgba(249,115,22,0.5)] hover:-translate-y-1"
+                  )}
+                >
+                  <AnimatePresence mode="wait">
+                    {isAdded ? (
+                      <motion.div key="added" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="flex items-center gap-2">
+                        <Check className="h-6 w-6" /> Added to Cart
+                      </motion.div>
+                    ) : (
+                      <motion.div key="add" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="flex items-center gap-2">
+                        <ShoppingCart className="h-6 w-6" /> Add to Cart
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </button>
               </div>
-            </div>
 
-            {/* Actions */}
-            <div className="flex items-end gap-4 mb-8">
-              <div className="w-1/3">
-                <label className="block text-sm font-semibold text-text-muted mb-2">Quantity</label>
-                <div className="flex items-center border border-gray-300 rounded-md bg-white">
+              {product.customizable && (
+                <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+                  <p className="text-sm text-text-muted font-medium mb-3">Need this with your logo or custom dimensions?</p>
                   <button 
-                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                    className="p-3 text-text-muted hover:text-primary transition-colors"
+                    onClick={() => setShowCustomForm(!showCustomForm)}
+                    className="text-primary font-bold hover:text-primary-hover underline underline-offset-4 decoration-2"
                   >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <input 
-                    type="number" 
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-full text-center font-bold text-lg outline-none appearance-none"
-                  />
-                  <button 
-                    onClick={() => setQuantity(q => q + 1)}
-                    className="p-3 text-text-muted hover:text-primary transition-colors"
-                  >
-                    <Plus className="h-4 w-4" />
+                    Request a Custom Quote for this product
                   </button>
                 </div>
+              )}
+            </div>
+
+            <AnimatePresence>
+              {showCustomForm && product.customizable && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-10 overflow-hidden"
+                >
+                  <div className="bg-secondary text-white rounded-3xl p-1 shadow-2xl">
+                    <CustomizeOrderForm baseProduct={product} onSuccess={() => setShowCustomForm(false)} />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Specifications */}
+            <div>
+              <h3 className="font-heading font-black text-2xl text-secondary mb-6 flex items-center gap-2">
+                <Ruler className="h-6 w-6 text-primary" /> Technical Specifications
+              </h3>
+              <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+                  <div className="p-6">
+                    <div className="text-sm text-text-muted font-bold uppercase tracking-widest mb-1">Dimensions</div>
+                    <div className="text-lg font-medium text-secondary">{product.dimensions}</div>
+                  </div>
+                  <div className="p-6">
+                    <div className="text-sm text-text-muted font-bold uppercase tracking-widest mb-1">Material</div>
+                    <div className="text-lg font-medium text-secondary">{product.material}</div>
+                  </div>
+                  <div className="p-6 border-t border-gray-100">
+                    <div className="text-sm text-text-muted font-bold uppercase tracking-widest mb-1">Strength/Ply</div>
+                    <div className="text-lg font-medium text-secondary">{product.ply}</div>
+                  </div>
+                  <div className="p-6 border-t border-gray-100">
+                    <div className="text-sm text-text-muted font-bold uppercase tracking-widest mb-1">Availability</div>
+                    <div className="text-lg font-medium text-green-600 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                      In Stock ({product.stock})
+                    </div>
+                  </div>
+                </div>
               </div>
-              
-              <button 
-                onClick={handleAddToCart}
-                className="flex-1 bg-primary hover:bg-primary-hover text-white font-bold py-4 px-6 rounded-md transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                Add to Cart
-              </button>
             </div>
 
             {/* Trust Badges */}
-            <div className="flex items-center gap-6 py-4 border-t border-b border-gray-100">
-              <div className="flex items-center gap-2 text-sm font-medium text-text-muted">
-                <Truck className="h-5 w-5 text-primary" /> Same-day dispatch
+            <div className="mt-12 flex flex-wrap gap-6 pt-12 border-t border-gray-200">
+              <div className="flex items-center gap-3 text-text-muted">
+                <ShieldCheck className="h-6 w-6 text-gray-400" />
+                <span className="text-sm font-medium">Verified Quality</span>
               </div>
-              <div className="flex items-center gap-2 text-sm font-medium text-text-muted">
-                <ShieldCheck className="h-5 w-5 text-primary" /> Quality checked
+              <div className="flex items-center gap-3 text-text-muted">
+                <Truck className="h-6 w-6 text-gray-400" />
+                <span className="text-sm font-medium">Fast Dispatch</span>
               </div>
             </div>
-
-            {/* Custom Quote Request Form */}
-            {product.customizable && (
-              <CustomizeOrderForm product={product} />
-            )}
 
           </div>
         </div>
