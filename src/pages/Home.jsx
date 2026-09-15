@@ -5,6 +5,7 @@ import { ArrowRight, Truck, ShieldCheck, Tag, ThumbsUp, MessageCircle } from 'lu
 import clsx from 'clsx';
 import { products as fallbackProducts, categories } from '../data/products';
 import { useProductStore } from '../store/useProductStore';
+import ReviewsSection from '../components/ReviewsSection';
 
 const FeatureCard = ({ icon: Icon, title, desc, delay }) => (
   <motion.div 
@@ -268,6 +269,11 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      {/* Reviews Section */}
+      <div className="bg-gray-50 border-t border-gray-100">
+        <ReviewsSection productId="home" />
+      </div>
 
     </div>
   );

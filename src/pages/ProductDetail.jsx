@@ -5,6 +5,7 @@ import { ArrowLeft, Check, Minus, Plus, ShoppingCart, Truck, ShieldCheck, Ruler 
 import { useProductStore } from '../store/useProductStore';
 import { useCartStore } from '../store/useCartStore';
 import CustomizeOrderForm from '../components/CustomizeOrderForm';
+import ReviewsSection from '../components/ReviewsSection';
 import clsx from 'clsx';
 
 export default function ProductDetail() {
@@ -279,6 +280,16 @@ export default function ProductDetail() {
 
           </div>
         </div>
+      </div>
+
+      {/* Per-Product Reviews Section */}
+      <div className="bg-gray-50 border-t border-gray-100">
+        <ReviewsSection
+          productId={product.id}
+          title="Customer Reviews"
+          subtitle={`Other Customer Comments`}
+          limit={4}
+        />
       </div>
     </div>
   );
