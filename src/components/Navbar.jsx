@@ -11,6 +11,9 @@ export default function Navbar() {
   const cartItemCount = useCartStore((state) => state.getTotalItems());
   const location = useLocation();
 
+  const isHomePage = location.pathname === '/';
+  const isSolidHeader = scrolled || !isHomePage;
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
@@ -37,12 +40,12 @@ export default function Navbar() {
   return (
     <header className={clsx(
       'fixed top-0 inset-x-0 z-50 transition-all duration-500 ease-in-out',
-      scrolled ? 'py-2' : 'py-0'
+      isSolidHeader ? 'py-2' : 'py-0'
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className={clsx(
           'relative flex items-center justify-between rounded-2xl px-6 py-4 transition-all duration-500',
-          scrolled ? 'glass shadow-lg border border-white/20' : 'bg-transparent border border-transparent'
+          isSolidHeader ? 'bg-white/90 backdrop-blur-md shadow-lg border border-gray-100' : 'bg-transparent border border-transparent'
         )}>
           {/* Logo Section */}
           <Link to="/" className="flex items-center gap-3 group z-50">
@@ -51,7 +54,7 @@ export default function Navbar() {
             </div>
             <span className={clsx(
               "font-heading font-extrabold text-2xl tracking-tight transition-colors duration-500",
-              scrolled ? "text-secondary" : "text-white"
+              isSolidHeader ? "text-secondary" : "text-white"
             )}>
               GHAZI<span className="text-primary">.</span>
             </span>
@@ -65,7 +68,7 @@ export default function Navbar() {
                 to={link.path}
                 className={({ isActive }) => clsx(
                   'relative px-5 py-2.5 font-sans text-sm font-bold transition-all duration-300 rounded-full group overflow-hidden whitespace-nowrap',
-                  isActive ? (scrolled ? 'text-primary' : 'text-white') : (scrolled ? 'text-text-muted hover:text-secondary' : 'text-gray-300 hover:text-white')
+                  isActive ? (isSolidHeader ? 'text-primary' : 'text-white') : (isSolidHeader ? 'text-text-muted hover:text-secondary' : 'text-gray-300 hover:text-white')
                 )}
               >
                 {({ isActive }) => (
@@ -76,7 +79,7 @@ export default function Navbar() {
                         layoutId="navbar-indicator"
                         className={clsx(
                           "absolute inset-0 rounded-full z-0",
-                          scrolled ? "bg-primary/10" : "bg-white/20 backdrop-blur-sm"
+                          isSolidHeader ? "bg-primary/10" : "bg-white/20 backdrop-blur-sm"
                         )}
                         initial={false}
                         transition={{ type: "spring", stiffness: 400, damping: 35 }}
@@ -96,7 +99,7 @@ export default function Navbar() {
               rel="noopener noreferrer"
               className={clsx(
                 "flex items-center gap-2 text-sm font-bold transition-all duration-300 hover:scale-105",
-                scrolled ? "text-secondary hover:text-primary" : "text-white hover:text-primary"
+                isSolidHeader ? "text-secondary hover:text-primary" : "text-white hover:text-primary"
               )}
             >
               <Phone className="h-4 w-4" />
@@ -106,7 +109,7 @@ export default function Navbar() {
             <Link to="/cart" className="relative p-2 group transition-transform duration-300 hover:scale-110">
               <div className={clsx(
                 "p-2.5 rounded-full transition-all duration-300",
-                scrolled ? "bg-gray-100 group-hover:bg-primary/10 text-secondary group-hover:text-primary" : "bg-white/10 group-hover:bg-primary/90 text-white backdrop-blur-md shadow-lg"
+                isSolidHeader ? "bg-gray-100 group-hover:bg-primary/10 text-secondary group-hover:text-primary" : "bg-white/10 group-hover:bg-primary/90 text-white backdrop-blur-md shadow-lg"
               )}>
                 <ShoppingCart className="h-5 w-5" />
               </div>
@@ -127,7 +130,7 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <div className="flex items-center lg:hidden gap-4 z-50">
-            <Link to="/cart" className={clsx("relative p-2 transition-colors duration-300", scrolled ? "text-secondary" : "text-white")}>
+            <Link to="/cart" className={clsx("relative p-2 transition-colors duration-300", isSolidHeader ? "text-secondary" : "text-white")}>
               <ShoppingCart className="h-6 w-6 drop-shadow-md" />
               {cartItemCount > 0 && (
                 <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-[10px] font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-primary rounded-full border-2 border-white">
@@ -139,7 +142,7 @@ export default function Navbar() {
               type="button"
               className={clsx(
                 "inline-flex items-center justify-center p-2.5 rounded-full focus:outline-none transition-all duration-300",
-                scrolled ? "text-secondary bg-gray-100 hover:bg-gray-200" : "text-white bg-white/10 hover:bg-white/20 backdrop-blur-md shadow-lg"
+                isSolidHeader ? "text-secondary bg-gray-100 hover:bg-gray-200" : "text-white bg-white/10 hover:bg-white/20 backdrop-blur-md shadow-lg"
               )}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
