@@ -15,9 +15,9 @@ export default function AddProduct() {
   const [form, setForm] = useState({
     id: '', name: '', category: '', price: '', dimensions: '',
     ply: '', material: '', condition: 'New', stock: '', description: '', customizable: false,
-    images: [''],
     bulkPricing: [{ minQty: '', price: '' }]
   });
+  const [imageFiles, setImageFiles] = useState([]);
 
   useEffect(() => {
     fetchCategories().then(res => setCategories(res.data));
@@ -28,10 +28,8 @@ export default function AddProduct() {
     setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const handleImageChange = (index, value) => {
-    const updated = [...form.images];
-    updated[index] = value;
-    setForm(prev => ({ ...prev, images: updated }));
+  const handleFileChange = (e) => {
+    setImageFiles(Array.from(e.target.files));
   };
 
   const handlePricingChange = (index, field, value) => {
@@ -45,18 +43,35 @@ export default function AddProduct() {
     setLoading(true);
     setError('');
     try {
-      const payload = {
-        ...form,
-        price: parseFloat(form.price),
-        stock: parseInt(form.stock),
-        images: form.images.filter(Boolean),
-        bulkPricing: form.bulkPricing.filter(t => t.minQty && t.price).map(t => ({ minQty: parseInt(t.minQty), price: parseFloat(t.price) }))
-      };
-      await createProduct(payload);
-      addProduct(payload);
+      const formData = new FormData();
+      formData.append('id', form.id);
+      formData.append('name', form.name);
+      formData.append('category', form.category);
+      formData.append('price', form.price);
+      formData.append('dimensions', form.dimensions);
+      formData.append('ply', form.ply);
+      formData.append('material', form.material);
+      formData.append('condition', form.condition);
+      formData.append('stock', form.stock);
+      formData.append('description', form.description);
+      formData.append('customizable', form.customizable);
+
+      const pricing = form.bulkPricing.filter(t => t.minQty && t.price).map(t => ({ minQty: parseInt(t.minQty), price: parseFloat(t.price) }));
+      formData.append('bulkPricing', JSON.stringify(pricing));
+
+      imageFiles.forEach((file) => {
+        formData.append('images', file);
+      });
+
+      const res = await createProduct(formData);
+      
+      // Optimistically add to store
+      addProduct({ ...form, images: res.data.images || [], bulkPricing: pricing, price: parseFloat(form.price), stock: parseInt(form.stock) });
+      
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-      setForm({ id: '', name: '', category: '', price: '', dimensions: '', ply: '', material: '', condition: 'New', stock: '', description: '', customizable: false, images: [''], bulkPricing: [{ minQty: '', price: '' }] });
+      setForm({ id: '', name: '', category: '', price: '', dimensions: '', ply: '', material: '', condition: 'New', stock: '', description: '', customizable: false, bulkPricing: [{ minQty: '', price: '' }] });
+      setImageFiles([]);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create product.');
     } finally {
@@ -143,23 +158,18 @@ export default function AddProduct() {
 
           {/* Images */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-heading font-black text-secondary mb-6">Product Images (URLs)</h2>
+            <h2 className="text-xl font-heading font-black text-secondary mb-6">Product Images (Upload)</h2>
             <div className="space-y-3">
-              {form.images.map((img, i) => (
-                <div key={i} className="flex gap-3">
-                  <input value={img} onChange={(e) => handleImageChange(i, e.target.value)} placeholder="https://..." className={`${inputClass} flex-1`} />
-                  {form.images.length > 1 && (
-                    <button type="button" onClick={() => setForm(p => ({ ...p, images: p.images.filter((_, idx) => idx !== i) }))}
-                      className="p-3 rounded-2xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
-                      <Trash2 className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button type="button" onClick={() => setForm(p => ({ ...p, images: [...p.images, ''] }))}
-                className="flex items-center gap-2 text-primary font-bold text-sm hover:text-primary-hover transition-colors">
-                <Plus className="h-4 w-4" /> Add Another Image URL
-              </button>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileChange}
+                className={inputClass}
+              />
+              <p className="text-xs text-gray-400 font-medium mt-2">
+                You can select multiple images (jpg, png, webp). The first image will be used as the main thumbnail.
+              </p>
             </div>
           </div>
         </div>
