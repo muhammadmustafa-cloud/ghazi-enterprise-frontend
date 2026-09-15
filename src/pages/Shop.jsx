@@ -2,13 +2,18 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, X, ArrowRight, PackageOpen } from 'lucide-react';
-import { products, categories, plyOptions } from '../data/products';
+import { useProductStore } from '../store/useProductStore';
+import { categories, plyOptions } from '../data/products';
 
 export default function Shop() {
   const { categoryId } = useParams();
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const [filteredProducts, setFilteredProducts] = useState(products);
-  
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const { products, fetchProducts, loading } = useProductStore();
+
+  // Fetch from API on mount
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
   // Filters state
   const [selectedCategory, setSelectedCategory] = useState(categoryId && categoryId !== 'all' ? categoryId : 'all');
   const [selectedPly, setSelectedPly] = useState('all');
@@ -46,7 +51,7 @@ export default function Shop() {
     }
 
     setFilteredProducts(result);
-  }, [selectedCategory, selectedPly, selectedCondition, sortBy]);
+  }, [products, selectedCategory, selectedPly, selectedCondition, sortBy]);
 
   const categoryName = categoryId && categoryId !== 'all' 
     ? categories.find(c => c.id === categoryId)?.name || 'All Products'
@@ -198,7 +203,11 @@ export default function Shop() {
 
           {/* Product Grid */}
           <div className="flex-1">
-            {filteredProducts.length === 0 ? (
+            {loading ? (
+              <div className="bg-white rounded-3xl p-16 text-center shadow-sm border border-gray-100 min-h-[400px] flex items-center justify-center">
+                <p className="text-lg text-text-muted font-bold">Loading products...</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
               <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="bg-white rounded-3xl p-16 text-center shadow-sm border border-gray-100 flex flex-col items-center justify-center min-h-[400px]"

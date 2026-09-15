@@ -3,7 +3,8 @@ export const categories = [
   { id: 'old-box', name: 'Used Carton Boxes', image: '/used-boxes.png' },
   { id: 'tape', name: 'Packaging Tape', image: '/tape.png' },
   { id: 'shrink-roll', name: 'Shrink Roll', image: '/shrink-roll.jpg' },
-  { id: 'bubble-wrap', name: 'Bubble Wrap', image: '/bubble-wrap.jpg' }
+  { id: 'bubble-wrap', name: 'Bubble Wrap', image: '/bubble-wrap.jpg' },
+  { id: 'pizza-cake', name: 'Pizza & Cake Box', image: 'https://images.unsplash.com/photo-1579227114347-15d08fc37cae?w=800&q=80' }
 ];
 
 export const products = [
@@ -145,6 +146,126 @@ export const products = [
     stock: 200,
     description: 'Lightweight and durable bubble wrap designed to provide excellent cushioning and protection for fragile items during transit.',
     customizable: false
+  },
+  {
+    id: 'pc-001',
+    name: 'Small (8x8x2) Pizza/Shipping Box',
+    category: 'pizza-cake',
+    price: 45,
+    bulkPricing: [
+      { minQty: 100, price: 40 },
+      { minQty: 500, price: 35 }
+    ],
+    dimensions: '8x8x2 inch',
+    ply: '3-ply',
+    material: 'Kraft Corrugated',
+    condition: 'New',
+    images: [
+      'https://images.unsplash.com/photo-1579227114347-15d08fc37cae?w=800&q=80'
+    ],
+    stock: 2000,
+    description: 'Perfectly sized for small pizzas, flatbreads, or small e-commerce shipping. Eco-friendly Kraft corrugated material provides a clean, rustic presentation.',
+    customizable: true
+  },
+  {
+    id: 'pc-002',
+    name: 'Medium (10x10x2) Pizza/Shipping Box',
+    category: 'pizza-cake',
+    price: 55,
+    bulkPricing: [
+      { minQty: 100, price: 50 },
+      { minQty: 500, price: 45 }
+    ],
+    dimensions: '10x10x2 inch',
+    ply: '3-ply',
+    material: 'Kraft Corrugated',
+    condition: 'New',
+    images: [
+      'https://images.unsplash.com/photo-1579227114347-15d08fc37cae?w=800&q=80'
+    ],
+    stock: 2500,
+    description: 'Standard medium pizza box. Helps protect your products during takeaway, delivery, and handling. Also great for shipping apparel or flat goods.',
+    customizable: true
+  },
+  {
+    id: 'pc-003',
+    name: 'Large (13x13x2) Pizza/Shipping Box',
+    category: 'pizza-cake',
+    price: 75,
+    bulkPricing: [
+      { minQty: 100, price: 70 },
+      { minQty: 500, price: 65 }
+    ],
+    dimensions: '13x13x2 inch',
+    ply: '3-ply',
+    material: 'Kraft Corrugated',
+    condition: 'New',
+    images: [
+      'https://images.unsplash.com/photo-1579227114347-15d08fc37cae?w=800&q=80'
+    ],
+    stock: 2000,
+    description: 'Large sized box designed for family-size pizzas or larger retail products. Sturdy and heat-retaining.',
+    customizable: true
+  },
+  {
+    id: 'pc-004',
+    name: 'XL (16x16x2) Pizza/Shipping Box',
+    category: 'pizza-cake',
+    price: 95,
+    bulkPricing: [
+      { minQty: 100, price: 90 },
+      { minQty: 500, price: 85 }
+    ],
+    dimensions: '16x16x2 inch',
+    ply: '3-ply',
+    material: 'Kraft Corrugated',
+    condition: 'New',
+    images: [
+      'https://images.unsplash.com/photo-1579227114347-15d08fc37cae?w=800&q=80'
+    ],
+    stock: 1500,
+    description: 'Extra-large capacity for premium pizzas and party platters. Ensures food stays hot and secure during transit.',
+    customizable: true
+  },
+  {
+    id: 'pc-005',
+    name: '(8x8x4) 1 Pound Corrugated Cake Box',
+    category: 'pizza-cake',
+    price: 65,
+    bulkPricing: [
+      { minQty: 100, price: 60 },
+      { minQty: 500, price: 55 }
+    ],
+    dimensions: '8x8x4 inch',
+    ply: '3-ply',
+    material: 'White/Kraft Corrugated',
+    condition: 'New',
+    images: [
+      'https://images.unsplash.com/photo-1552686159-22a36b306132?w=800&q=80'
+    ],
+    stock: 1800,
+    description: 'Designed specifically for bakeries. This 1-pound cake box provides a beautiful presentation while keeping delicate frosting intact.',
+    customizable: true
+  },
+  {
+    id: 'pc-006',
+    name: '(10x10x4) 2 Pound Corrugated Cake Box',
+    category: 'pizza-cake',
+    price: 85,
+    bulkPricing: [
+      { minQty: 100, price: 80 },
+      { minQty: 500, price: 75 }
+    ],
+    dimensions: '10x10x4 inch',
+    ply: '3-ply',
+    material: 'White/Kraft Corrugated',
+    condition: 'New',
+    images: [
+      'https://images.unsplash.com/photo-1552686159-22a36b306132?w=800&q=80'
+    ],
+    stock: 1600,
+    description: 'Sturdy 2-pound capacity cake box. Ensures maximum protection for layered cakes or heavy bakery items during delivery.',
+    customizable: true
   }
 ];
 

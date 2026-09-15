@@ -28,6 +28,7 @@ export default function Navbar() {
     { name: 'Home', path: '/' },
     { name: 'New Boxes', path: '/shop/new-box' },
     { name: 'Used Boxes', path: '/shop/old-box' },
+    { name: 'Pizza & Cake', path: '/shop/pizza-cake' },
     { name: 'Tape', path: '/shop/tape' },
     { name: 'Shrink Roll', path: '/shop/shrink-roll' },
     { name: 'Bubble Wrap', path: '/shop/bubble-wrap' },

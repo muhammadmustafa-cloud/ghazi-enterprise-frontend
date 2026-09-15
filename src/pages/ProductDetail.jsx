@@ -1,16 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, Minus, Plus, ShoppingCart, Truck, ShieldCheck, Ruler } from 'lucide-react';
-import { products } from '../data/products';
+import { useProductStore } from '../store/useProductStore';
 import { useCartStore } from '../store/useCartStore';
 import CustomizeOrderForm from '../components/CustomizeOrderForm';
 import clsx from 'clsx';
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const { products, fetchProducts } = useProductStore();
+  const addToCart = useCartStore((state) => state.addToCart);
+
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
   const product = products.find((p) => p.id === id);
-  const addToCart = useCartStore((state) => state.addItem);
   
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
@@ -46,7 +50,12 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = () => {
-    addToCart(product, quantity, getCurrentPrice());
+    addToCart({
+      ...product,
+      quantity,
+      price: getCurrentPrice(),
+      isCustom: false,
+    });
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };
@@ -220,7 +229,7 @@ export default function ProductDetail() {
                   className="mb-10 overflow-hidden"
                 >
                   <div className="bg-secondary text-white rounded-3xl p-1 shadow-2xl">
-                    <CustomizeOrderForm baseProduct={product} onSuccess={() => setShowCustomForm(false)} />
+                    <CustomizeOrderForm product={product} onSuccess={() => setShowCustomForm(false)} />
                   </div>
                 </motion.div>
               )}

@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useCartStore } from '../store/useCartStore';
 import { Trash2, Minus, Plus, ShoppingCart, ArrowRight, ShieldCheck } from 'lucide-react';
-import clsx from 'clsx';
 
 export default function Cart() {
   const { items, updateQuantity, removeFromCart, getSubtotal } = useCartStore();

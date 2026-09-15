@@ -16,7 +16,6 @@ export default function Checkout() {
   const deliveryCharges = subtotal > 0 ? (deliveryMethod === 'express' ? 1000 : 500) : 0;
   const total = subtotal + deliveryCharges;
   const customItems = items.filter(i => i.isCustom);
-  const standardItems = items.filter(i => !i.isCustom);
 
   if (items.length === 0 && !isOrderPlaced) {
     navigate('/cart');

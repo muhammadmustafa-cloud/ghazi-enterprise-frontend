@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Truck, ShieldCheck, Tag, ThumbsUp, MessageCircle } from 'lucide-react';
 import clsx from 'clsx';
-import { products, categories } from '../data/products';
+import { products as fallbackProducts, categories } from '../data/products';
+import { useProductStore } from '../store/useProductStore';
 
 const FeatureCard = ({ icon: Icon, title, desc, delay }) => (
   <motion.div 
@@ -22,10 +24,13 @@ const FeatureCard = ({ icon: Icon, title, desc, delay }) => (
 );
 
 export default function Home() {
-  const featuredProducts = products.slice(0, 4);
+  const { products, fetchProducts } = useProductStore();
+  const featuredProducts = (products.length > 0 ? products : fallbackProducts).slice(0, 4);
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 1000], [0, 300]);
   const opacityHero = useTransform(scrollY, [0, 600], [1, 0]);
+
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   return (
     <div className="flex flex-col">
