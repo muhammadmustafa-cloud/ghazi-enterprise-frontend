@@ -1,164 +1,98 @@
 import { Link } from 'react-router-dom';
 import { useCartStore } from '../store/useCartStore';
-import { Trash2, Minus, Plus, ShoppingCart, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Trash2, Minus, Plus, ArrowRight } from 'lucide-react';
+import PageHeader from '../components/ui/PageHeader';
 
 export default function Cart() {
   const { items, updateQuantity, removeFromCart, getSubtotal } = useCartStore();
-
-  const standardItems = items.filter(item => !item.isCustom);
-  const customItems = items.filter(item => item.isCustom);
+  const standard = items.filter((i) => !i.isCustom);
+  const custom = items.filter((i) => i.isCustom);
   const subtotal = getSubtotal();
-  const deliveryCharges = subtotal > 0 ? 500 : 0; // Flat 500 PKR delivery for standard items
-  const total = subtotal + deliveryCharges;
+  const delivery = subtotal > 0 ? 500 : 0;
+  const total = subtotal + delivery;
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center bg-gray-50 px-4">
-        <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-6">
-          <ShoppingCart className="h-12 w-12 text-gray-400" />
+      <div className="min-h-screen bg-snow pt-28">
+        <div className="container-main flex flex-col items-center py-32 text-center">
+          <p className="font-display text-6xl font-extrabold text-line-light">EMPTY</p>
+          <p className="mt-4 text-smoke">Your cart is empty — time to stock up.</p>
+          <Link to="/shop/all" className="btn-blaze mt-8">Browse Catalog</Link>
         </div>
-        <h2 className="text-3xl font-heading font-bold text-text-main mb-2">Your Cart is Empty</h2>
-        <p className="text-text-muted mb-8 max-w-md text-center">Looks like you haven't added any products to your cart yet. Let's find you some high-quality packaging!</p>
-        <Link to="/shop/new-box" className="px-8 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-md transition-colors shadow-lg">
-          Start Shopping
-        </Link>
       </div>
     );
   }
 
-  const CartItemRow = ({ item }) => (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center py-6 border-b border-gray-100 gap-4 sm:gap-6 group">
-      <Link to={`/product/${item.id.replace(/-custom-\d+$/, '')}`} className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-        <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-      </Link>
-      
-      <div className="flex-1 min-w-0">
-        <Link to={`/product/${item.id.replace(/-custom-\d+$/, '')}`}>
-          <h4 className="font-heading font-bold text-lg text-text-main hover:text-primary transition-colors truncate">{item.name}</h4>
-        </Link>
-        <div className="text-sm text-text-muted mt-1 space-y-1">
-          <p>Dimensions: {item.dimensions}</p>
-          <p>Ply: {item.ply}</p>
-          {item.isCustom && item.hasPrinting && <p className="text-primary font-medium">Includes Custom Logo Printing</p>}
-        </div>
-      </div>
+  return (
+    <div className="min-h-screen bg-snow pt-28">
+      <PageHeader tag="Cart" title="Your Order" description={`${items.length} item${items.length !== 1 ? 's' : ''} ready to checkout`} />
 
-      <div className="flex items-center gap-6 sm:w-auto w-full justify-between sm:justify-end">
-        {/* Quantity Editor */}
-        <div className="flex items-center border border-gray-300 rounded-md bg-white">
-          <button 
-            onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
-            className="p-2 text-text-muted hover:text-primary transition-colors"
-          >
-            <Minus className="h-4 w-4" />
-          </button>
-          <span className="w-10 text-center font-bold text-sm">{item.quantity}</span>
-          <button 
-            onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
-            className="p-2 text-text-muted hover:text-primary transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="text-right w-24">
-          {item.isCustom ? (
-            <span className="text-sm font-bold text-secondary uppercase tracking-wide">Pending Quote</span>
-          ) : (
-            <span className="font-bold text-lg text-text-main">₨ {item.price * item.quantity}</span>
+      <div className="container-main grid gap-10 pb-20 lg:grid-cols-[1fr_380px]">
+        <div className="space-y-6">
+          {standard.length > 0 && (
+            <section className="card-light overflow-hidden">
+              <div className="border-b border-line-light bg-void px-6 py-4">
+                <h2 className="font-display font-bold uppercase tracking-wider text-white">Standard Items</h2>
+              </div>
+              <ul className="divide-y divide-line-light">
+                {standard.map((item) => <CartRow key={item.cartItemId} item={item} updateQuantity={updateQuantity} removeFromCart={removeFromCart} />)}
+              </ul>
+            </section>
+          )}
+          {custom.length > 0 && (
+            <section className="card-light overflow-hidden border-2 border-blaze/30">
+              <div className="border-b border-line-light bg-blaze px-6 py-4">
+                <h2 className="font-display font-bold uppercase tracking-wider text-white">Custom Quotes</h2>
+              </div>
+              <ul className="divide-y divide-line-light">
+                {custom.map((item) => <CartRow key={item.cartItemId} item={item} updateQuantity={updateQuantity} removeFromCart={removeFromCart} />)}
+              </ul>
+            </section>
           )}
         </div>
 
-        <button 
-          onClick={() => removeFromCart(item.cartItemId)}
-          className="text-gray-400 hover:text-red-500 transition-colors p-2"
-          title="Remove Item"
-        >
-          <Trash2 className="h-5 w-5" />
-        </button>
+        <aside className="card-light h-fit p-6 lg:sticky lg:top-28">
+          <h2 className="font-display text-xl font-bold uppercase">Summary</h2>
+          <dl className="mt-6 space-y-3 text-sm">
+            <div className="flex justify-between"><dt className="text-smoke">Subtotal</dt><dd className="font-bold">Rs {subtotal.toLocaleString()}</dd></div>
+            <div className="flex justify-between"><dt className="text-smoke">Delivery</dt><dd className="font-bold">Rs {delivery.toLocaleString()}</dd></div>
+          </dl>
+          <div className="my-6 h-px bg-line-light" />
+          <div className="flex justify-between items-end">
+            <span className="font-bold uppercase tracking-wider text-smoke">Total</span>
+            <span className="font-display text-4xl font-extrabold text-blaze">Rs {total.toLocaleString()}</span>
+          </div>
+          <Link to="/checkout" className="btn-blaze mt-8 w-full !rounded-2xl">
+            Checkout <ArrowRight className="h-4 w-4" />
+          </Link>
+        </aside>
       </div>
     </div>
   );
+}
 
+function CartRow({ item, updateQuantity, removeFromCart }) {
+  const pid = item.id.replace(/-custom-\d+$/, '');
   return (
-    <div className="bg-gray-50 min-h-screen py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl md:text-4xl font-heading font-bold text-text-main mb-8">Shopping Cart</h1>
-
-        <div className="flex flex-col lg:flex-row gap-10">
-          
-          <div className="flex-1 space-y-8">
-            {/* Standard Items Section */}
-            {standardItems.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-                <h3 className="font-heading font-bold text-xl border-b border-gray-200 pb-4 mb-2">Standard Items</h3>
-                <div className="flex flex-col">
-                  {standardItems.map(item => <CartItemRow key={item.cartItemId} item={item} />)}
-                </div>
-              </div>
-            )}
-
-            {/* Custom Quote Items Section */}
-            {customItems.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-secondary p-6 sm:p-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-secondary text-white text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wide">
-                  Quote Requests
-                </div>
-                <h3 className="font-heading font-bold text-xl border-b border-gray-200 pb-4 mb-2">Custom Quote Requests</h3>
-                <p className="text-sm text-text-muted mb-4 mt-2">These items require a custom quote. Proceed with the checkout to submit your request to our sales team.</p>
-                <div className="flex flex-col">
-                  {customItems.map(item => <CartItemRow key={item.cartItemId} item={item} />)}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Order Summary */}
-          <div className="lg:w-96 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 sticky top-28">
-              <h3 className="font-heading font-bold text-xl mb-6">Order Summary</h3>
-              
-              <div className="space-y-4 text-sm mb-6 pb-6 border-b border-gray-200">
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Subtotal ({standardItems.length} items)</span>
-                  <span className="font-bold text-text-main">₨ {subtotal}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Estimated Delivery</span>
-                  <span className="font-bold text-text-main">₨ {deliveryCharges}</span>
-                </div>
-                {customItems.length > 0 && (
-                  <div className="flex justify-between bg-yellow-50 p-3 rounded-md border border-yellow-200">
-                    <span className="text-yellow-800 font-medium">Custom Quotes Pending</span>
-                    <span className="font-bold text-secondary">TBD</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-between items-end mb-8">
-                <span className="font-heading font-bold text-lg">Total</span>
-                <span className="font-bold text-3xl text-primary">₨ {total}</span>
-              </div>
-
-              {/* Promo Code UI */}
-              <div className="mb-6 flex gap-2">
-                <input type="text" placeholder="Promo Code" className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-primary" />
-                <button className="bg-gray-100 hover:bg-gray-200 text-text-main px-4 py-2 rounded-md text-sm font-bold transition-colors">Apply</button>
-              </div>
-
-              <Link to="/checkout" className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 px-4 rounded-md transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
-                Proceed to Checkout <ArrowRight className="h-5 w-5" />
-              </Link>
-
-              <div className="mt-6 flex items-center justify-center gap-2 text-sm text-text-muted">
-                <ShieldCheck className="h-4 w-4 text-green-500" />
-                Secure and encrypted checkout
-              </div>
-            </div>
-          </div>
-
-        </div>
+    <li className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
+      <Link to={`/product/${pid}`} className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-void-soft">
+        <img src={item.images[0]} alt={item.name} className="h-full w-full object-cover" />
+      </Link>
+      <div className="min-w-0 flex-1">
+        <Link to={`/product/${pid}`} className="font-display font-bold hover:text-blaze">{item.name}</Link>
+        <p className="mt-1 text-xs text-smoke">{item.dimensions} · {item.ply}</p>
       </div>
-    </div>
+      <div className="flex items-center gap-4">
+        <div className="inline-flex items-center rounded-full border border-line-light">
+          <button type="button" onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)} className="px-3 py-2"><Minus className="h-3.5 w-3.5" /></button>
+          <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
+          <button type="button" onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)} className="px-3 py-2"><Plus className="h-3.5 w-3.5" /></button>
+        </div>
+        <p className="w-24 text-right font-display font-bold">
+          {item.isCustom ? <span className="text-xs uppercase text-blaze">Quote</span> : `Rs ${(item.price * item.quantity).toLocaleString()}`}
+        </p>
+        <button type="button" onClick={() => removeFromCart(item.cartItemId)} className="text-smoke hover:text-blaze"><Trash2 className="h-4 w-4" /></button>
+      </div>
+    </li>
   );
 }

@@ -1,199 +1,158 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Phone, Package } from 'lucide-react';
+import { ShoppingBag, Menu, X, Zap } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
-import { motion, AnimatePresence } from 'framer-motion';
+import { WHATSAPP_URL } from '../config/env';
 import clsx from 'clsx';
 
-export default function Navbar() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const cartItemCount = useCartStore((state) => state.getTotalItems());
-  const location = useLocation();
+const navLinks = [
+  { name: 'Shop', path: '/shop/all' },
+  { name: 'New Boxes', path: '/shop/new-box' },
+  { name: 'Used', path: '/shop/old-box' },
+  { name: 'Tape', path: '/shop/tape' },
+  { name: 'About', path: '/about' },
+  { name: 'Contact', path: '/contact' },
+];
 
-  const isHomePage = location.pathname === '/';
-  const isSolidHeader = scrolled || !isHomePage;
+export default function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const cartCount = useCartStore((s) => s.getTotalItems());
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+  const onDark = isHome && !scrolled;
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location]);
-
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'New Boxes', path: '/shop/new-box' },
-    { name: 'Used Boxes', path: '/shop/old-box' },
-    { name: 'Pizza & Cake', path: '/shop/pizza-cake' },
-    { name: 'Tape', path: '/shop/tape' },
-    { name: 'Shrink Roll', path: '/shop/shrink-roll' },
-    { name: 'Bubble Wrap', path: '/shop/bubble-wrap' },
-  ];
+    setMenuOpen(false);
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen, location]);
 
   return (
-    <header className={clsx(
-      'fixed top-0 inset-x-0 z-50 transition-all duration-500 ease-in-out',
-      isSolidHeader ? 'py-2' : 'py-0'
-    )}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav className={clsx(
-          'relative flex items-center justify-between rounded-2xl px-6 py-4 transition-all duration-500',
-          isSolidHeader ? 'bg-white/90 backdrop-blur-md shadow-lg border border-gray-100' : 'bg-transparent border border-transparent'
-        )}>
-          {/* Logo Section */}
-          <Link to="/" className="flex items-center gap-3 group z-50">
-            <div className="bg-primary p-2.5 rounded-xl text-white shadow-[0_0_15px_rgba(249,115,22,0.5)] group-hover:scale-105 transition-transform duration-300">
-              <Package className="h-6 w-6" strokeWidth={2.5} />
+    <>
+      <header className={clsx(
+        'fixed inset-x-0 top-0 z-50 transition-all duration-500',
+        scrolled
+          ? 'border-b border-line-light/80 bg-white/90 py-3 shadow-lg shadow-black/5 backdrop-blur-xl'
+          : isHome
+            ? 'bg-transparent py-5'
+            : 'border-b border-line-light bg-white py-3'
+      )}>
+        <div className="container-main flex items-center justify-between">
+          <Link to="/" className="group flex items-center gap-3">
+            <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-blaze shadow-[0_0_30px_rgba(255,77,0,0.5)] transition-transform group-hover:scale-105">
+              <Zap className="h-5 w-5 text-white" fill="white" />
             </div>
-            <span className={clsx(
-              "font-heading font-extrabold text-2xl tracking-tight transition-colors duration-500",
-              isSolidHeader ? "text-secondary" : "text-white"
-            )}>
-              GHAZI<span className="text-primary">.</span>
-            </span>
+            <div>
+              <span className={clsx('block font-display text-xl font-extrabold uppercase tracking-tight', onDark && !scrolled ? 'text-white' : 'text-void')}>
+                Ghazi
+              </span>
+              <span className={clsx('text-[9px] font-bold uppercase tracking-[0.3em]', onDark && !scrolled ? 'text-white/50' : 'text-smoke')}>
+                Enterprise
+              </span>
+            </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1 absolute left-1/2 -translate-x-1/2">
+          <nav className="hidden items-center gap-1 rounded-full border border-line-light/80 bg-white/80 px-2 py-1.5 shadow-sm backdrop-blur-md lg:flex">
             {navLinks.map((link) => (
               <NavLink
-                key={link.name}
+                key={link.path}
                 to={link.path}
                 className={({ isActive }) => clsx(
-                  'relative px-5 py-2.5 font-sans text-sm font-bold transition-all duration-300 rounded-full group overflow-hidden whitespace-nowrap',
-                  isActive ? (isSolidHeader ? 'text-primary' : 'text-white') : (isSolidHeader ? 'text-text-muted hover:text-secondary' : 'text-gray-300 hover:text-white')
+                  'rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all',
+                  isActive
+                    ? 'bg-void text-white'
+                    : 'text-smoke hover:bg-void/5 hover:text-void'
                 )}
               >
-                {({ isActive }) => (
-                  <>
-                    <span className="relative z-10 drop-shadow-sm">{link.name}</span>
-                    {isActive && (
-                      <motion.div 
-                        layoutId="navbar-indicator"
-                        className={clsx(
-                          "absolute inset-0 rounded-full z-0",
-                          isSolidHeader ? "bg-primary/10" : "bg-white/20 backdrop-blur-sm"
-                        )}
-                        initial={false}
-                        transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                      />
-                    )}
-                  </>
-                )}
+                {link.name}
               </NavLink>
             ))}
-          </div>
+          </nav>
 
-          {/* Right Action Section (Cart + Contact) */}
-          <div className="hidden lg:flex items-center space-x-6 z-50">
-            <a 
-              href="https://wa.me/923220258575" 
-              target="_blank" 
+          <div className="flex items-center gap-2">
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
               rel="noopener noreferrer"
               className={clsx(
-                "flex items-center gap-2 text-sm font-bold transition-all duration-300 hover:scale-105",
-                isSolidHeader ? "text-secondary hover:text-primary" : "text-white hover:text-primary"
+                'hidden rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all sm:inline-flex',
+                onDark && !scrolled
+                  ? 'border border-white/20 text-white hover:bg-white/10'
+                  : 'border border-line-light text-void hover:border-blaze hover:text-blaze'
               )}
             >
-              <Phone className="h-4 w-4" />
-              <span className="drop-shadow-sm">Support</span>
+              WhatsApp
             </a>
-            
-            <Link to="/cart" className="relative p-2 group transition-transform duration-300 hover:scale-110">
-              <div className={clsx(
-                "p-2.5 rounded-full transition-all duration-300",
-                isSolidHeader ? "bg-gray-100 group-hover:bg-primary/10 text-secondary group-hover:text-primary" : "bg-white/10 group-hover:bg-primary/90 text-white backdrop-blur-md shadow-lg"
-              )}>
-                <ShoppingCart className="h-5 w-5" />
-              </div>
-              <AnimatePresence>
-                {cartItemCount > 0 && (
-                  <motion.span 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-primary rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)] border-2 border-white"
-                  >
-                    {cartItemCount}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </Link>
-          </div>
 
-          {/* Mobile Menu Button */}
-          <div className="flex items-center lg:hidden gap-4 z-50">
-            <Link to="/cart" className={clsx("relative p-2 transition-colors duration-300", isSolidHeader ? "text-secondary" : "text-white")}>
-              <ShoppingCart className="h-6 w-6 drop-shadow-md" />
-              {cartItemCount > 0 && (
-                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-[10px] font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-primary rounded-full border-2 border-white">
-                  {cartItemCount}
+            <Link
+              to="/cart"
+              className={clsx(
+                'relative flex h-11 w-11 items-center justify-center rounded-full transition-all',
+                onDark && !scrolled
+                  ? 'border border-white/20 text-white hover:bg-white/10'
+                  : 'border border-line-light text-void hover:border-blaze hover:text-blaze'
+              )}
+            >
+              <ShoppingBag className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-blaze px-1 text-[10px] font-bold text-white">
+                  {cartCount}
                 </span>
               )}
             </Link>
+
+            <Link to="/shop/all" className="btn-blaze hidden !px-5 !py-2.5 !text-xs md:inline-flex">
+              Shop Now
+            </Link>
+
             <button
               type="button"
               className={clsx(
-                "inline-flex items-center justify-center p-2.5 rounded-full focus:outline-none transition-all duration-300",
-                isSolidHeader ? "text-secondary bg-gray-100 hover:bg-gray-200" : "text-white bg-white/10 hover:bg-white/20 backdrop-blur-md shadow-lg"
+                'flex h-11 w-11 items-center justify-center rounded-full lg:hidden',
+                onDark && !scrolled ? 'border border-white/20 text-white' : 'border border-line-light text-void'
               )}
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              onClick={() => setMenuOpen(true)}
             >
-              <span className="sr-only">Open main menu</span>
-              {isMobileMenuOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
-              ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
-              )}
+              <Menu className="h-5 w-5" />
             </button>
           </div>
-        </nav>
-      </div>
+        </div>
+      </header>
 
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="lg:hidden absolute top-full left-4 right-4 mt-2 p-4 glass rounded-2xl shadow-xl border border-white/20 origin-top"
-          >
-            <div className="flex flex-col space-y-2">
+      {menuOpen && (
+        <div className="fixed inset-0 z-[60] bg-void lg:hidden">
+          <div className="flex h-full flex-col p-6">
+            <div className="flex items-center justify-between">
+              <span className="font-display text-2xl font-bold uppercase text-white">Menu</span>
+              <button type="button" onClick={() => setMenuOpen(false)} className="text-white">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <nav className="mt-12 flex flex-1 flex-col gap-2">
               {navLinks.map((link) => (
                 <NavLink
-                  key={link.name}
+                  key={link.path}
                   to={link.path}
-                  className={({ isActive }) =>
-                    clsx(
-                      'px-4 py-3 rounded-xl text-base font-bold transition-colors',
-                      isActive ? 'bg-primary/10 text-primary' : 'text-text-main hover:bg-gray-50'
-                    )
-                  }
+                  className={({ isActive }) => clsx(
+                    'border-b border-line py-5 font-display text-3xl font-bold uppercase transition-colors',
+                    isActive ? 'text-blaze' : 'text-white/70 hover:text-white'
+                  )}
                 >
                   {link.name}
                 </NavLink>
               ))}
-              <a 
-                href="https://wa.me/923000000000" 
-                className="flex items-center justify-center gap-2 px-4 py-3 mt-4 rounded-xl text-base font-bold bg-primary text-white hover:bg-primary-hover transition-colors shadow-lg shadow-primary/20"
-                target="_blank" 
-                rel="noopener noreferrer"
-              >
-                <Phone className="h-5 w-5" />
-                Contact Support
-              </a>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
+            </nav>
+            <Link to="/shop/all" className="btn-blaze w-full justify-center">Shop Now</Link>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

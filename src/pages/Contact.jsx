@@ -1,132 +1,64 @@
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
+import PageHeader from '../components/ui/PageHeader';
+import { CONTACT_ADDRESS, CONTACT_EMAIL, CONTACT_EMAIL_SECONDARY, CONTACT_PHONE, CONTACT_PHONE_SECONDARY, WHATSAPP_URL } from '../config/env';
+
+const items = [
+  { icon: MapPin, l: 'Address', v: [CONTACT_ADDRESS] },
+  { icon: Phone, l: 'Phone', v: [CONTACT_PHONE, CONTACT_PHONE_SECONDARY] },
+  { icon: Mail, l: 'Email', v: [CONTACT_EMAIL, CONTACT_EMAIL_SECONDARY] },
+  { icon: Clock, l: 'Hours', v: ['Mon–Sat: 9AM – 6PM', 'Sunday: Closed'] },
+];
 
 export default function Contact() {
   return (
-    <div className="bg-gray-50 min-h-screen py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-heading font-bold text-text-main mb-4">Contact Us</h1>
-          <p className="text-text-muted max-w-2xl mx-auto">
-            Have a question about bulk pricing, custom orders, or anything else? Our team is ready to help you find the perfect packaging solution.
-          </p>
-        </div>
+    <div className="bg-snow min-h-screen">
+      <PageHeader tag="Contact" title="Let's Talk Packaging" description="Bulk orders, custom builds, or general questions — we respond within one business day." />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          
-          {/* Contact Info Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-              <h3 className="font-heading font-bold text-xl mb-6">Get In Touch</h3>
-              
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="bg-primary/10 p-3 rounded-full flex-shrink-0">
-                    <MapPin className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-text-main">Office Address</h4>
-                    <p className="text-sm text-text-muted mt-1">Plot 42, Industrial Area, Sector 7, Karachi, Pakistan</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="bg-primary/10 p-3 rounded-full flex-shrink-0">
-                    <Phone className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-text-main">Phone & WhatsApp</h4>
-                    <p className="text-sm text-text-muted mt-1">+92 300 0000000</p>
-                    <p className="text-sm text-text-muted">+92 21 3000000</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="bg-primary/10 p-3 rounded-full flex-shrink-0">
-                    <Mail className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-text-main">Email Support</h4>
-                    <p className="text-sm text-text-muted mt-1">sales@ghazienterprise.com</p>
-                    <p className="text-sm text-text-muted">info@ghazienterprise.com</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="bg-primary/10 p-3 rounded-full flex-shrink-0">
-                    <Clock className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-text-main">Business Hours</h4>
-                    <p className="text-sm text-text-muted mt-1">Mon - Sat: 9:00 AM - 6:00 PM</p>
-                    <p className="text-sm text-text-muted">Sunday: Closed</p>
-                  </div>
-                </div>
-              </div>
+      <div className="container-main grid gap-10 pb-20 lg:grid-cols-3">
+        <aside className="space-y-4">
+          {items.map(({ icon: Icon, l, v }) => (
+            <div key={l} className="card-light p-6">
+              <Icon className="mb-3 h-5 w-5 text-blaze" />
+              <p className="text-[10px] font-bold uppercase tracking-widest text-smoke">{l}</p>
+              {v.map((line) => <p key={line} className="mt-1 text-sm">{line}</p>)}
             </div>
+          ))}
+          <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn-blaze w-full !rounded-2xl">WhatsApp Us</a>
+        </aside>
+
+        <form className="card-light p-8 lg:col-span-2" onSubmit={(e) => { e.preventDefault(); alert('Message sent!'); }}>
+          <h2 className="font-display text-2xl font-bold">Send a message</h2>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2">
+            <Field label="Name *" required />
+            <Field label="Company" />
+            <Field label="Email *" type="email" required />
+            <Field label="Phone *" type="tel" required placeholder={CONTACT_PHONE} />
           </div>
-
-          {/* Contact Form */}
-          <div className="lg:col-span-2">
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 h-full">
-              <h3 className="font-heading font-bold text-2xl mb-6">Send us a Message</h3>
-              
-              <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); alert('Message sent!'); }}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-text-main">Full Name *</label>
-                    <input required type="text" className="w-full border border-gray-300 rounded-md p-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="John Doe" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-text-main">Company (Optional)</label>
-                    <input type="text" className="w-full border border-gray-300 rounded-md p-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Your Business Ltd." />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-text-main">Email Address *</label>
-                    <input required type="email" className="w-full border border-gray-300 rounded-md p-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="john@example.com" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-text-main">Phone Number *</label>
-                    <input required type="tel" className="w-full border border-gray-300 rounded-md p-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="+92 300 0000000" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-text-main">Subject *</label>
-                  <select required className="w-full border border-gray-300 rounded-md p-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white">
-                    <option value="">Select a subject...</option>
-                    <option value="bulk">Bulk Order Inquiry</option>
-                    <option value="custom">Custom Packaging Quote</option>
-                    <option value="support">General Support</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-text-main">Message *</label>
-                  <textarea required rows="5" className="w-full border border-gray-300 rounded-md p-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none" placeholder="How can we help you?"></textarea>
-                </div>
-
-                <button 
-                  type="submit"
-                  className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-md transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
-                >
-                  <Send className="h-5 w-5" />
-                  Send Message
-                </button>
-              </form>
-            </div>
+          <div className="mt-5">
+            <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-smoke">Subject *</label>
+            <select required className="input-field">
+              <option value="">Select...</option>
+              <option value="bulk">Bulk order</option>
+              <option value="custom">Custom quote</option>
+              <option value="support">Support</option>
+            </select>
           </div>
-        </div>
-
-        {/* Map Placeholder */}
-        <div className="mt-12 bg-gray-200 rounded-xl h-96 w-full flex items-center justify-center border border-gray-300">
-          <div className="text-center text-gray-500">
-            <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p className="font-semibold">Interactive Map Embed Goes Here</p>
+          <div className="mt-5">
+            <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-smoke">Message *</label>
+            <textarea required rows={5} className="input-field resize-none" placeholder="Tell us what you need..." />
           </div>
-        </div>
-
+          <button type="submit" className="btn-blaze mt-8 !rounded-2xl"><Send className="h-4 w-4" /> Send</button>
+        </form>
       </div>
+    </div>
+  );
+}
+
+function Field({ label, ...props }) {
+  return (
+    <div>
+      <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-smoke">{label}</label>
+      <input className="input-field" {...props} />
     </div>
   );
 }

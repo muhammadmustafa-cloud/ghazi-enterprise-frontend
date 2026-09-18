@@ -1,88 +1,52 @@
-import { ShieldCheck, Truck, Users, Package } from 'lucide-react';
+import { Shield, Truck, Users, Package } from 'lucide-react';
+import PageHeader from '../components/ui/PageHeader';
+
+const values = [
+  { icon: Shield, t: 'Quality First', d: 'Burst strength tested on every batch.' },
+  { icon: Package, t: 'Custom Builds', d: 'Your dimensions, ply & logo printing.' },
+  { icon: Truck, t: 'Fast Dispatch', d: 'Same-day on standard inventory.' },
+  { icon: Users, t: 'B2B Partner', d: 'Volume pricing & dedicated support.' },
+];
 
 export default function About() {
   return (
-    <div className="bg-gray-50 min-h-screen">
-      
-      {/* Hero */}
-      <section className="bg-gray-900 py-20 text-white text-center">
-        <div className="max-w-4xl mx-auto px-4">
-          <h1 className="text-4xl md:text-5xl font-heading font-bold mb-6">About Ghazi Enterprise</h1>
-          <p className="text-lg md:text-xl text-gray-300">
-            Pakistan's leading supplier of premium industrial packaging solutions, built on trust, durability, and reliability.
-          </p>
+    <div className="bg-snow min-h-screen">
+      <PageHeader
+        tag="About"
+        title="Pakistan's Packaging Powerhouse"
+        description="From a single corrugated supplier in Karachi to a full-scale industrial packaging company."
+      />
+
+      <section className="container-main grid items-center gap-16 py-20 lg:grid-cols-2">
+        <div>
+          <h2 className="headline-lg">Built on boxes.<br />Trusted by 500+.</h2>
+          <div className="mt-6 space-y-4 leading-relaxed text-smoke">
+            <p>Ghazi Enterprise supplies factories, e-commerce brands, bakeries, and logistics companies with corrugated cartons, tapes, shrink film, and custom-manufactured packaging.</p>
+            <p>We obsess over wall strength, edge crush, and stacking durability — because your products depend on it.</p>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl">
+          <img src="/new-boxes.png" alt="Boxes" className="aspect-[4/3] w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-blaze/40 to-transparent" />
         </div>
       </section>
 
-      {/* Story */}
-      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 className="text-3xl font-heading font-bold text-text-main mb-6">Our Story</h2>
-            <div className="space-y-4 text-text-muted leading-relaxed">
-              <p>
-                Founded with a mission to bridge the gap in the local packaging industry, Ghazi Enterprise started as a small supplier of corrugated boxes for local businesses in Karachi. Over the years, we've grown into a comprehensive packaging partner for hundreds of factories, e-commerce brands, and individuals nationwide.
-              </p>
-              <p>
-                We understand that packaging is more than just a box—it's the first physical interaction a customer has with your brand, and it's the armor that protects your products during transit. That's why we obsess over quality, strength, and reliability.
-              </p>
-              <p>
-                From heavy-duty 7-ply industrial cartons to cost-effective recycled boxes and high-adhesion tapes, our extensive catalog ensures that you find exactly what you need. And if you don't, our custom manufacturing unit is ready to build it for you.
-              </p>
-            </div>
-          </div>
-          <div className="relative h-96 rounded-2xl overflow-hidden shadow-xl">
-            <img 
-              src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=1000&q=80" 
-              alt="Warehouse with carton boxes" 
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-primary/10 mix-blend-multiply"></div>
+      <section className="section-dark py-24">
+        <div className="container-main">
+          <h2 className="headline-lg mb-14 text-center text-white">Why Choose Us</h2>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {values.map(({ icon: Icon, t, d }) => (
+              <div key={t} className="rounded-2xl border border-line bg-void-card p-6 text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blaze/20">
+                  <Icon className="h-6 w-6 text-blaze" />
+                </div>
+                <h3 className="font-display font-bold text-white">{t}</h3>
+                <p className="mt-2 text-sm text-white/40">{d}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
-
-      {/* Values */}
-      <section className="py-20 bg-white border-y border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-heading font-bold text-center text-text-main mb-12">Why Choose Us?</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center p-6">
-              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <ShieldCheck className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="font-heading font-bold text-xl mb-2">Uncompromised Quality</h3>
-              <p className="text-sm text-text-muted">Rigorous strength testing ensures every box meets industrial standards.</p>
-            </div>
-            
-            <div className="text-center p-6">
-              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <Package className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="font-heading font-bold text-xl mb-2">Custom Solutions</h3>
-              <p className="text-sm text-text-muted">Tailor-made dimensions, ply strength, and high-quality logo printing.</p>
-            </div>
-
-            <div className="text-center p-6">
-              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <Truck className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="font-heading font-bold text-xl mb-2">Fast Delivery</h3>
-              <p className="text-sm text-text-muted">Extensive ready-stock allows for same-day dispatch on standard items.</p>
-            </div>
-
-            <div className="text-center p-6">
-              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <Users className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="font-heading font-bold text-xl mb-2">B2B Partnerships</h3>
-              <p className="text-sm text-text-muted">Dedicated account managers and competitive pricing for bulk buyers.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
     </div>
   );
 }

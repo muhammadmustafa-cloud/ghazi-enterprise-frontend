@@ -1,106 +1,298 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { PackagePlus, FolderPlus, Package, TrendingUp } from 'lucide-react';
-import AdminLayout from '../../components/admin/AdminLayout';
-import { useProductStore } from '../../store/useProductStore';
 
-const StatCard = ({ icon: Icon, label, value, color }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex items-center gap-6"
-  >
-    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${color}`}>
-      <Icon className="h-8 w-8 text-white" />
-    </div>
-    <div>
-      <p className="text-3xl font-black text-secondary">{value}</p>
-      <p className="text-sm text-text-muted font-bold uppercase tracking-wider">{label}</p>
-    </div>
-  </motion.div>
-);
+import { Link } from 'react-router-dom';
+
+import { Package, FolderOpen, ShoppingBag, Trash2, Pencil } from 'lucide-react';
+
+import AdminLayout from '../../components/admin/AdminLayout';
+
+import { useCatalogStore } from '../../store/useCatalogStore';
+
+import { useOrderStore } from '../../store/useOrderStore';
+
+
 
 export default function AdminDashboard() {
-  const { products, fetchProducts, loading } = useProductStore();
 
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  const products = useCatalogStore((s) => s.products);
 
-  const categoryCount = [...new Set(products.map(p => p.category))].length;
+  const categories = useCatalogStore((s) => s.categories);
+
+  const loading = useCatalogStore((s) => s.loading);
+
+  const error = useCatalogStore((s) => s.error);
+
+  const fetchCatalog = useCatalogStore((s) => s.fetchCatalog);
+
+  const deleteProduct = useCatalogStore((s) => s.deleteProduct);
+
+  const deleteCategory = useCatalogStore((s) => s.deleteCategory);
+
+  const getCategoryName = useCatalogStore((s) => s.getCategoryName);
+
+  const orders = useOrderStore((s) => s.orders);
+
+  const fetchOrders = useOrderStore((s) => s.fetchOrders);
+
+
+
+  useEffect(() => {
+
+    fetchCatalog();
+
+    fetchOrders();
+
+  }, [fetchCatalog, fetchOrders]);
+
+
+
+  const handleDeleteProduct = async (id, name) => {
+
+    if (!window.confirm(`Delete "${name}"?`)) return;
+
+    try {
+
+      await deleteProduct(id);
+
+    } catch (err) {
+
+      alert(err.response?.data?.message || 'Failed to delete product');
+
+    }
+
+  };
+
+
+
+  const handleDeleteCategory = async (id, name) => {
+
+    if (!window.confirm(`Delete category "${name}"?`)) return;
+
+    try {
+
+      await deleteCategory(id);
+
+    } catch (err) {
+
+      alert(err.response?.data?.message || 'Failed to delete category');
+
+    }
+
+  };
+
+
 
   return (
+
     <AdminLayout>
-      <div className="mb-10">
-        <h1 className="text-4xl font-heading font-black text-secondary mb-2">Dashboard</h1>
-        <p className="text-text-muted font-medium text-lg">Welcome to Ghazi Enterprise Admin Panel</p>
+
+      <div className="mb-8">
+
+        <h1 className="font-display text-3xl font-extrabold uppercase text-white">Dashboard</h1>
+
+        <p className="mt-1 text-sm text-white/40">Connected to backend API</p>
+
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <StatCard icon={Package} label="Total Products" value={loading ? '...' : products.length} color="bg-primary" />
-        <StatCard icon={FolderPlus} label="Categories" value={loading ? '...' : categoryCount} color="bg-secondary" />
-        <StatCard icon={TrendingUp} label="In Stock" value={loading ? '...' : products.filter(p => p.stock > 0).length} color="bg-green-500" />
-      </div>
 
-      {/* Quick Actions */}
-      <div className="mb-10">
-        <h2 className="text-2xl font-heading font-black text-secondary mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Link to="/admin/add-product" className="bg-white rounded-3xl p-8 border-2 border-dashed border-gray-200 hover:border-primary hover:shadow-lg hover:shadow-primary/10 transition-all group flex items-center gap-5">
-            <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
-              <PackagePlus className="h-7 w-7 text-primary group-hover:text-white" />
-            </div>
-            <div>
-              <p className="font-heading font-black text-xl text-secondary">Add New Product</p>
-              <p className="text-text-muted font-medium">Add a product directly to the database</p>
-            </div>
-          </Link>
-          <Link to="/admin/add-category" className="bg-white rounded-3xl p-8 border-2 border-dashed border-gray-200 hover:border-primary hover:shadow-lg hover:shadow-primary/10 transition-all group flex items-center gap-5">
-            <div className="w-14 h-14 bg-secondary/10 rounded-2xl flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-all">
-              <FolderPlus className="h-7 w-7 text-secondary group-hover:text-white" />
-            </div>
-            <div>
-              <p className="font-heading font-black text-xl text-secondary">Add New Category</p>
-              <p className="text-text-muted font-medium">Create a new product category</p>
-            </div>
-          </Link>
+
+      {error && (
+
+        <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+
+          {error} — make sure backend is running on port 5000
+
         </div>
+
+      )}
+
+
+
+      <div className="mb-10 grid gap-4 sm:grid-cols-4">
+
+        <StatCard icon={Package} label="Products" value={loading ? '…' : products.length} />
+
+        <StatCard icon={FolderOpen} label="Categories" value={loading ? '…' : categories.length} />
+
+        <StatCard icon={ShoppingBag} label="Orders" value={orders.length} />
+
+        <StatCard icon={Package} label="Storage" value="MySQL" />
+
       </div>
 
-      {/* Products Table */}
-      <div>
-        <h2 className="text-2xl font-heading font-black text-secondary mb-6">All Products</h2>
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          {loading ? (
-            <div className="p-16 text-center text-text-muted font-bold">Loading products...</div>
+
+
+      <section className="mb-12">
+
+        <div className="mb-4 flex items-center justify-between">
+
+          <h2 className="font-display text-xl font-bold uppercase text-white">Products</h2>
+
+          <Link to="/admin/products/add" className="btn-blaze !py-2 !text-xs">+ Add product</Link>
+
+        </div>
+
+
+
+        <div className="card-dark overflow-hidden">
+
+          {loading && products.length === 0 ? (
+
+            <p className="p-8 text-center text-white/40">Loading products…</p>
+
           ) : (
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="text-left py-4 px-6 text-xs font-black text-secondary uppercase tracking-widest">Product</th>
-                  <th className="text-left py-4 px-6 text-xs font-black text-secondary uppercase tracking-widest">Category</th>
-                  <th className="text-left py-4 px-6 text-xs font-black text-secondary uppercase tracking-widest">Price</th>
-                  <th className="text-left py-4 px-6 text-xs font-black text-secondary uppercase tracking-widest">Stock</th>
+
+            <table className="w-full text-left text-sm">
+
+              <thead>
+
+                <tr className="border-b border-line text-[10px] font-bold uppercase tracking-widest text-white/40">
+
+                  <th className="p-4">Product</th>
+
+                  <th className="p-4">Category</th>
+
+                  <th className="p-4">Price</th>
+
+                  <th className="p-4">Stock</th>
+
+                  <th className="p-4 text-right">Actions</th>
+
                 </tr>
+
               </thead>
-              <tbody className="divide-y divide-gray-50">
+
+              <tbody>
+
                 {products.map((p) => (
-                  <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-6 font-bold text-secondary">{p.name}</td>
-                    <td className="py-4 px-6 text-text-muted font-medium capitalize">{p.category?.replace('-', ' ')}</td>
-                    <td className="py-4 px-6 font-bold text-secondary">₨ {p.price}</td>
-                    <td className="py-4 px-6">
-                      <span className={`px-3 py-1 rounded-full text-xs font-black ${p.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                        {p.stock > 0 ? `${p.stock} units` : 'Out of Stock'}
-                      </span>
+
+                  <tr key={p.id} className="border-b border-line/50 hover:bg-white/5">
+
+                    <td className="p-4">
+
+                      <div className="flex items-center gap-3">
+
+                        <img src={p.images?.[0]} alt="" className="h-10 w-10 rounded-lg object-cover" />
+
+                        <div>
+
+                          <p className="font-bold text-white">{p.name}</p>
+
+                          <p className="text-xs text-white/40">{p.id}</p>
+
+                        </div>
+
+                      </div>
+
                     </td>
+
+                    <td className="p-4 text-white/60">{getCategoryName(p.category)}</td>
+
+                    <td className="p-4 font-bold text-blaze">Rs {Number(p.price).toLocaleString()}</td>
+
+                    <td className="p-4 text-white/60">{Number(p.stock).toLocaleString()}</td>
+
+                    <td className="p-4 text-right">
+
+                      <div className="flex justify-end gap-2">
+
+                        <Link to={`/admin/products/edit/${p.id}`} className="rounded-lg p-2 text-white/50 hover:bg-white/10 hover:text-white">
+
+                          <Pencil className="h-4 w-4" />
+
+                        </Link>
+
+                        <button type="button" onClick={() => handleDeleteProduct(p.id, p.name)} className="rounded-lg p-2 text-red-400/60 hover:bg-red-500/10 hover:text-red-400">
+
+                          <Trash2 className="h-4 w-4" />
+
+                        </button>
+
+                      </div>
+
+                    </td>
+
                   </tr>
+
                 ))}
+
               </tbody>
+
             </table>
+
           )}
+
         </div>
-      </div>
+
+      </section>
+
+
+
+      <section>
+
+        <div className="mb-4 flex items-center justify-between">
+
+          <h2 className="font-display text-xl font-bold uppercase text-white">Categories</h2>
+
+          <Link to="/admin/categories/add" className="btn-outline !border-white/20 !text-white !py-2 !text-xs">+ Add category</Link>
+
+        </div>
+
+
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+          {categories.map((cat) => (
+
+            <div key={cat.id} className="card-dark flex items-center gap-4 p-4">
+
+              <img src={cat.image} alt="" className="h-16 w-16 rounded-xl object-cover" />
+
+              <div className="flex-1 min-w-0">
+
+                <p className="font-bold text-white truncate">{cat.name}</p>
+
+                <p className="text-xs text-white/40">{cat.id}</p>
+
+              </div>
+
+              <button type="button" onClick={() => handleDeleteCategory(cat.id, cat.name)} className="rounded-lg p-2 text-red-400/60 hover:bg-red-500/10 hover:text-red-400">
+
+                <Trash2 className="h-4 w-4" />
+
+              </button>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      </section>
+
     </AdminLayout>
+
   );
+
 }
+
+
+
+function StatCard({ icon: Icon, label, value }) {
+
+  return (
+
+    <div className="card-dark p-5">
+
+      <Icon className="mb-3 h-5 w-5 text-blaze" />
+
+      <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">{label}</p>
+
+      <p className="font-display text-2xl font-bold text-white">{value}</p>
+
+    </div>
+
+  );
+
+}
+

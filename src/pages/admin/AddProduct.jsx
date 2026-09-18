@@ -1,212 +1,225 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Trash2, CheckCircle, Package } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { createProduct, fetchCategories } from '../../services/api';
-import { useProductStore } from '../../store/useProductStore';
+import { useCatalogStore } from '../../store/useCatalogStore';
+import { plyOptions } from '../../data/products';
+
+const emptyForm = {
+  id: '',
+  name: '',
+  category: '',
+  price: '',
+  stock: '',
+  dimensions: '',
+  material: '',
+  ply: 'N/A',
+  condition: 'New',
+  description: '',
+  imageUrl: '',
+  customizable: false,
+  bulkTier1Qty: '',
+  bulkTier1Price: '',
+  bulkTier2Qty: '',
+  bulkTier2Price: '',
+};
 
 export default function AddProduct() {
-  const addProduct = useProductStore((s) => s.addProduct);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const { id: editId } = useParams();
+  const navigate = useNavigate();
+  const products = useCatalogStore((s) => s.products);
+  const categories = useCatalogStore((s) => s.categories);
+  const addProduct = useCatalogStore((s) => s.addProduct);
+  const updateProduct = useCatalogStore((s) => s.updateProduct);
+  const fetchCatalog = useCatalogStore((s) => s.fetchCatalog);
 
-  const [form, setForm] = useState({
-    id: '', name: '', category: '', price: '', dimensions: '',
-    ply: '', material: '', condition: 'New', stock: '', description: '', customizable: false,
-    bulkPricing: [{ minQty: '', price: '' }]
-  });
-  const [imageFiles, setImageFiles] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchCategories().then(res => setCategories(res.data));
-  }, []);
+    if (products.length === 0) fetchCatalog();
+  }, [products.length, fetchCatalog]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-  };
+  const existing = editId ? products.find((p) => p.id === editId) : null;
 
-  const handleFileChange = (e) => {
-    setImageFiles(Array.from(e.target.files));
-  };
+  const [form, setForm] = useState(() => {
+    if (!existing) return { ...emptyForm, category: categories[0]?.id || '' };
+    const tiers = existing.bulkPricing || [];
+    return {
+      id: existing.id,
+      name: existing.name,
+      category: existing.category,
+      price: String(existing.price),
+      stock: String(existing.stock),
+      dimensions: existing.dimensions,
+      material: existing.material,
+      ply: existing.ply,
+      condition: existing.condition,
+      description: existing.description,
+      imageUrl: existing.images[0] || '',
+      customizable: existing.customizable,
+      bulkTier1Qty: tiers[0] ? String(tiers[0].minQty) : '',
+      bulkTier1Price: tiers[0] ? String(tiers[0].price) : '',
+      bulkTier2Qty: tiers[1] ? String(tiers[1].minQty) : '',
+      bulkTier2Price: tiers[1] ? String(tiers[1].price) : '',
+    };
+  });
 
-  const handlePricingChange = (index, field, value) => {
-    const updated = [...form.bulkPricing];
-    updated[index][field] = value;
-    setForm(prev => ({ ...prev, bulkPricing: updated }));
-  };
+  const set = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    setSaving(true);
+    setError(null);
+
+    const bulkPricing = [];
+    if (form.bulkTier1Qty && form.bulkTier1Price) {
+      bulkPricing.push({ minQty: Number(form.bulkTier1Qty), price: Number(form.bulkTier1Price) });
+    }
+    if (form.bulkTier2Qty && form.bulkTier2Price) {
+      bulkPricing.push({ minQty: Number(form.bulkTier2Qty), price: Number(form.bulkTier2Price) });
+    }
+
+    const product = {
+      id: form.id.trim(),
+      name: form.name.trim(),
+      category: form.category,
+      price: Number(form.price),
+      stock: Number(form.stock),
+      dimensions: form.dimensions,
+      material: form.material,
+      ply: form.ply,
+      condition: form.condition,
+      description: form.description,
+      images: [form.imageUrl || 'https://placehold.co/600x600/070707/FF4D00?text=Product'],
+      customizable: form.customizable,
+      bulkPricing,
+    };
+
     try {
-      const formData = new FormData();
-      formData.append('id', form.id);
-      formData.append('name', form.name);
-      formData.append('category', form.category);
-      formData.append('price', form.price);
-      formData.append('dimensions', form.dimensions);
-      formData.append('ply', form.ply);
-      formData.append('material', form.material);
-      formData.append('condition', form.condition);
-      formData.append('stock', form.stock);
-      formData.append('description', form.description);
-      formData.append('customizable', form.customizable);
-
-      const pricing = form.bulkPricing.filter(t => t.minQty && t.price).map(t => ({ minQty: parseInt(t.minQty), price: parseFloat(t.price) }));
-      formData.append('bulkPricing', JSON.stringify(pricing));
-
-      imageFiles.forEach((file) => {
-        formData.append('images', file);
-      });
-
-      const res = await createProduct(formData);
-      
-      // Optimistically add to store
-      addProduct({ ...form, images: res.data.images || [], bulkPricing: pricing, price: parseFloat(form.price), stock: parseInt(form.stock) });
-      
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-      setForm({ id: '', name: '', category: '', price: '', dimensions: '', ply: '', material: '', condition: 'New', stock: '', description: '', customizable: false, bulkPricing: [{ minQty: '', price: '' }] });
-      setImageFiles([]);
+      if (existing) {
+        await updateProduct(existing.id, product);
+      } else {
+        if (products.some((p) => p.id === product.id)) {
+          setError('Product ID already exists');
+          setSaving(false);
+          return;
+        }
+        await addProduct(product);
+      }
+      navigate('/admin/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create product.');
+      setError(err.response?.data?.message || err.response?.data?.error || 'Failed to save product');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const inputClass = "w-full px-5 py-3.5 rounded-2xl border-2 border-gray-100 bg-gray-50 text-secondary font-medium focus:outline-none focus:border-primary focus:bg-white transition-all";
-  const labelClass = "block text-sm font-black text-secondary mb-2 uppercase tracking-wider";
-
   return (
     <AdminLayout>
-      <div className="mb-10">
-        <h1 className="text-4xl font-heading font-black text-secondary mb-2">Add New Product</h1>
-        <p className="text-text-muted font-medium text-lg">Fill in the details below to publish a product to the store.</p>
+      <div className="mb-8">
+        <h1 className="font-display text-3xl font-extrabold uppercase text-white">
+          {existing ? 'Edit Product' : 'Add Product'}
+        </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Left Column - Main Info */}
-        <div className="xl:col-span-2 space-y-6">
-          {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm font-bold rounded-2xl p-4">{error}</div>}
-          {success && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-green-50 border border-green-200 text-green-700 text-sm font-bold rounded-2xl p-4 flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" /> Product created and published successfully!
-            </motion.div>
-          )}
+      <form onSubmit={handleSubmit} className="card-dark max-w-2xl space-y-5 p-8">
+        {error && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</div>
+        )}
+        <Field label="Product ID" required>
+          <input className="input-field w-full !bg-void !text-white" value={form.id} onChange={(e) => set('id', e.target.value)} disabled={!!existing} required />
+        </Field>
 
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-heading font-black text-secondary mb-6 flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> Product Info</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className={labelClass}>Product ID</label>
-                <input name="id" value={form.id} onChange={handleChange} required placeholder="e.g., nb-003" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Category</label>
-                <select name="category" value={form.category} onChange={handleChange} required className={inputClass}>
-                  <option value="">Select Category</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>Product Name</label>
-                <input name="name" value={form.name} onChange={handleChange} required placeholder="e.g., Standard Moving Box 18x18x18" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Base Price (₨)</label>
-                <input type="number" name="price" value={form.price} onChange={handleChange} required placeholder="150" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Stock Quantity</label>
-                <input type="number" name="stock" value={form.stock} onChange={handleChange} required placeholder="500" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Dimensions</label>
-                <input name="dimensions" value={form.dimensions} onChange={handleChange} placeholder="18x18x18 inch" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Ply / Strength</label>
-                <input name="ply" value={form.ply} onChange={handleChange} placeholder="3-ply, 5-ply, N/A" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Material</label>
-                <input name="material" value={form.material} onChange={handleChange} placeholder="Kraft Corrugated" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Condition</label>
-                <select name="condition" value={form.condition} onChange={handleChange} className={inputClass}>
-                  <option value="New">New</option>
-                  <option value="Used - Good">Used - Good</option>
-                  <option value="Used - Fair">Used - Fair</option>
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelClass}>Description</label>
-                <textarea name="description" value={form.description} onChange={handleChange} rows={4} placeholder="Describe the product..." className={`${inputClass} resize-none`} />
-              </div>
-              <div className="flex items-center gap-3">
-                <input type="checkbox" id="customizable" name="customizable" checked={form.customizable} onChange={handleChange} className="w-5 h-5 rounded text-primary accent-primary cursor-pointer" />
-                <label htmlFor="customizable" className="font-bold text-secondary cursor-pointer">Customizable (accept custom orders)</label>
-              </div>
-            </div>
-          </div>
+        <Field label="Name" required>
+          <input className="input-field w-full !bg-void !text-white" value={form.name} onChange={(e) => set('name', e.target.value)} required />
+        </Field>
 
-          {/* Images */}
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-heading font-black text-secondary mb-6">Product Images (Upload)</h2>
-            <div className="space-y-3">
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleFileChange}
-                className={inputClass}
-              />
-              <p className="text-xs text-gray-400 font-medium mt-2">
-                You can select multiple images (jpg, png, webp). The first image will be used as the main thumbnail.
-              </p>
-            </div>
+        <Field label="Category" required>
+          <select className="input-field w-full !bg-void !text-white" value={form.category} onChange={(e) => set('category', e.target.value)} required>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </Field>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Price (Rs)" required>
+            <input type="number" className="input-field w-full !bg-void !text-white" value={form.price} onChange={(e) => set('price', e.target.value)} required />
+          </Field>
+          <Field label="Stock" required>
+            <input type="number" className="input-field w-full !bg-void !text-white" value={form.stock} onChange={(e) => set('stock', e.target.value)} required />
+          </Field>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Dimensions">
+            <input className="input-field w-full !bg-void !text-white" value={form.dimensions} onChange={(e) => set('dimensions', e.target.value)} placeholder="12×10×8 in" />
+          </Field>
+          <Field label="Material">
+            <input className="input-field w-full !bg-void !text-white" value={form.material} onChange={(e) => set('material', e.target.value)} />
+          </Field>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Ply">
+            <select className="input-field w-full !bg-void !text-white" value={form.ply} onChange={(e) => set('ply', e.target.value)}>
+              {plyOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </Field>
+          <Field label="Condition">
+            <select className="input-field w-full !bg-void !text-white" value={form.condition} onChange={(e) => set('condition', e.target.value)}>
+              <option value="New">New</option>
+              <option value="Used">Used</option>
+              <option value="New/Used">New/Used</option>
+            </select>
+          </Field>
+        </div>
+
+        <Field label="Image URL">
+          <input className="input-field w-full !bg-void !text-white" value={form.imageUrl} onChange={(e) => set('imageUrl', e.target.value)} placeholder="https://..." />
+        </Field>
+
+        <Field label="Description">
+          <textarea className="input-field w-full !bg-void !text-white min-h-[100px]" value={form.description} onChange={(e) => set('description', e.target.value)} />
+        </Field>
+
+        <label className="flex items-center gap-3 text-sm text-white/70">
+          <input type="checkbox" checked={form.customizable} onChange={(e) => set('customizable', e.target.checked)} className="accent-blaze" />
+          Customizable (size/printing)
+        </label>
+
+        <div className="rounded-xl border border-line p-5">
+          <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Wholesale tiers (optional)</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Tier 1 min qty">
+              <input type="number" className="input-field w-full !bg-void !text-white" value={form.bulkTier1Qty} onChange={(e) => set('bulkTier1Qty', e.target.value)} />
+            </Field>
+            <Field label="Tier 1 price">
+              <input type="number" className="input-field w-full !bg-void !text-white" value={form.bulkTier1Price} onChange={(e) => set('bulkTier1Price', e.target.value)} />
+            </Field>
+            <Field label="Tier 2 min qty">
+              <input type="number" className="input-field w-full !bg-void !text-white" value={form.bulkTier2Qty} onChange={(e) => set('bulkTier2Qty', e.target.value)} />
+            </Field>
+            <Field label="Tier 2 price">
+              <input type="number" className="input-field w-full !bg-void !text-white" value={form.bulkTier2Price} onChange={(e) => set('bulkTier2Price', e.target.value)} />
+            </Field>
           </div>
         </div>
 
-        {/* Right Column - Pricing & Actions */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-            <h2 className="text-xl font-heading font-black text-secondary mb-6">Bulk Pricing Tiers</h2>
-            <div className="space-y-4">
-              {form.bulkPricing.map((tier, i) => (
-                <div key={i} className="grid grid-cols-2 gap-3 items-center">
-                  <div>
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 block">Min Qty</label>
-                    <input type="number" value={tier.minQty} onChange={(e) => handlePricingChange(i, 'minQty', e.target.value)} placeholder="100" className={inputClass} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 block">Price (₨)</label>
-                    <input type="number" value={tier.price} onChange={(e) => handlePricingChange(i, 'price', e.target.value)} placeholder="130" className={inputClass} />
-                  </div>
-                </div>
-              ))}
-              <button type="button" onClick={() => setForm(p => ({ ...p, bulkPricing: [...p.bulkPricing, { minQty: '', price: '' }] }))}
-                className="flex items-center gap-2 text-primary font-bold text-sm hover:text-primary-hover transition-colors">
-                <Plus className="h-4 w-4" /> Add Pricing Tier
-              </button>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-5 bg-primary hover:bg-primary-hover text-white font-black text-lg rounded-2xl transition-all shadow-[0_0_30px_rgba(249,115,22,0.3)] hover:shadow-[0_0_40px_rgba(249,115,22,0.5)] hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Creating Product...' : 'Publish Product'}
-          </button>
+        <div className="flex gap-3 pt-2">
+          <button type="submit" disabled={saving} className="btn-blaze">{saving ? 'Saving…' : existing ? 'Save changes' : 'Add product'}</button>
+          <button type="button" onClick={() => navigate('/admin/dashboard')} className="btn-outline !border-white/20 !text-white">Cancel</button>
         </div>
       </form>
     </AdminLayout>
+  );
+}
+
+function Field({ label, children, required }) {
+  return (
+    <div>
+      <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-white/40">
+        {label}{required && ' *'}
+      </label>
+      {children}
+    </div>
   );
 }

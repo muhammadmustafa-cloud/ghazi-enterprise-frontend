@@ -1,79 +1,88 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { CheckCircle, FolderPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { createCategory } from '../../services/api';
+import { useCatalogStore } from '../../store/useCatalogStore';
 
 export default function AddCategory() {
-  const [form, setForm] = useState({ id: '', name: '', image: '' });
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const categories = useCatalogStore((s) => s.categories);
+  const addCategory = useCatalogStore((s) => s.addCategory);
 
-  const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const [form, setForm] = useState({ id: '', name: '', image: '' });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const set = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); setError('');
+    const id = form.id.trim().toLowerCase().replace(/\s+/g, '-');
+
+    if (categories.some((c) => c.id === id)) {
+      setError('Category ID already exists');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
     try {
-      await createCategory(form);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-      setForm({ id: '', name: '', image: '' });
+      await addCategory({
+        id,
+        name: form.name.trim(),
+        image: form.image || 'https://placehold.co/800x600/070707/FF4D00?text=Category',
+      });
+      navigate('/admin/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create category.');
+      setError(err.response?.data?.message || 'Failed to add category');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const inputClass = "w-full px-5 py-3.5 rounded-2xl border-2 border-gray-100 bg-gray-50 text-secondary font-medium focus:outline-none focus:border-primary focus:bg-white transition-all";
-  const labelClass = "block text-sm font-black text-secondary mb-2 uppercase tracking-wider";
-
   return (
     <AdminLayout>
-      <div className="mb-10">
-        <h1 className="text-4xl font-heading font-black text-secondary mb-2">Add New Category</h1>
-        <p className="text-text-muted font-medium text-lg">Create a new product category for the store.</p>
+      <div className="mb-8">
+        <h1 className="font-display text-3xl font-extrabold uppercase text-white">Add Category</h1>
       </div>
 
-      <div className="max-w-xl">
-        <div className="bg-white rounded-3xl p-10 shadow-sm border border-gray-100">
-          <h2 className="text-xl font-heading font-black text-secondary mb-6 flex items-center gap-2">
-            <FolderPlus className="h-5 w-5 text-primary" /> Category Details
-          </h2>
+      <form onSubmit={handleSubmit} className="card-dark max-w-lg space-y-5 p-8">
+        {error && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</div>
+        )}
 
-          {error && <div className="bg-red-50 border border-red-200 text-red-600 text-sm font-bold rounded-2xl p-4 mb-5">{error}</div>}
-          {success && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-green-50 border border-green-200 text-green-700 text-sm font-bold rounded-2xl p-4 mb-5 flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" /> Category created successfully!
-            </motion.div>
-          )}
+        <Field label="Category ID (slug)" required>
+          <input
+            className="input-field w-full !bg-void !text-white"
+            value={form.id}
+            onChange={(e) => set('id', e.target.value)}
+            placeholder="e.g. old-box"
+            required
+          />
+        </Field>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className={labelClass}>Category ID (slug)</label>
-              <input name="id" value={form.id} onChange={handleChange} required placeholder="e.g., shoe-box" className={inputClass} />
-              <p className="text-xs text-gray-400 mt-1.5 font-medium">Lowercase, no spaces, use hyphens. e.g., <code>pizza-cake</code></p>
-            </div>
-            <div>
-              <label className={labelClass}>Category Name</label>
-              <input name="name" value={form.name} onChange={handleChange} required placeholder="e.g., Shoe Boxes" className={inputClass} />
-            </div>
-            <div>
-              <label className={labelClass}>Category Image URL</label>
-              <input name="image" value={form.image} onChange={handleChange} placeholder="https://images.unsplash.com/..." className={inputClass} />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-black text-lg rounded-2xl transition-all shadow-[0_0_30px_rgba(249,115,22,0.3)] hover:-translate-y-0.5 disabled:opacity-60"
-            >
-              {loading ? 'Creating...' : 'Create Category'}
-            </button>
-          </form>
+        <Field label="Display name" required>
+          <input className="input-field w-full !bg-void !text-white" value={form.name} onChange={(e) => set('name', e.target.value)} required />
+        </Field>
+
+        <Field label="Image URL">
+          <input className="input-field w-full !bg-void !text-white" value={form.image} onChange={(e) => set('image', e.target.value)} placeholder="https://..." />
+        </Field>
+
+        <div className="flex gap-3 pt-2">
+          <button type="submit" disabled={saving} className="btn-blaze">{saving ? 'Saving…' : 'Add category'}</button>
+          <button type="button" onClick={() => navigate('/admin/dashboard')} className="btn-outline !border-white/20 !text-white">Cancel</button>
         </div>
-      </div>
+      </form>
     </AdminLayout>
+  );
+}
+
+function Field({ label, children, required }) {
+  return (
+    <div>
+      <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-white/40">
+        {label}{required && ' *'}
+      </label>
+      {children}
+    </div>
   );
 }

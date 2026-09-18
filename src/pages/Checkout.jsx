@@ -1,229 +1,288 @@
 import { useState } from 'react';
+
 import { Link, useNavigate } from 'react-router-dom';
+
 import { useCartStore } from '../store/useCartStore';
-import { CheckCircle2, PackageCheck } from 'lucide-react';
+
+import { useOrderStore } from '../store/useOrderStore';
+
+import { CheckCircle2 } from 'lucide-react';
+
+import PageHeader from '../components/ui/PageHeader';
+
 import clsx from 'clsx';
 
+
+
+const emptyCustomer = { firstName: '', lastName: '', address: '', phone: '', city: 'Karachi' };
+
+
+
 export default function Checkout() {
+
   const { items, getSubtotal, clearCart } = useCartStore();
+
+  const addOrder = useOrderStore((s) => s.addOrder);
+
   const navigate = useNavigate();
 
-  const [isOrderPlaced, setIsOrderPlaced] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('cod');
-  const [deliveryMethod, setDeliveryMethod] = useState('standard');
+
+
+  const [placed, setPlaced] = useState(null);
+
+  const [submitting, setSubmitting] = useState(false);
+
+  const [error, setError] = useState(null);
+
+  const [payment, setPayment] = useState('cod');
+
+  const [delivery, setDelivery] = useState('standard');
+
+  const [customer, setCustomer] = useState(emptyCustomer);
+
+
 
   const subtotal = getSubtotal();
-  const deliveryCharges = subtotal > 0 ? (deliveryMethod === 'express' ? 1000 : 500) : 0;
-  const total = subtotal + deliveryCharges;
-  const customItems = items.filter(i => i.isCustom);
 
-  if (items.length === 0 && !isOrderPlaced) {
-    navigate('/cart');
-    return null;
-  }
+  const deliveryFee = subtotal > 0 ? (delivery === 'express' ? 1000 : 500) : 0;
 
-  const handlePlaceOrder = (e) => {
+  const total = subtotal + deliveryFee;
+
+  const customItems = items.filter((i) => i.isCustom);
+
+
+
+  if (items.length === 0 && !placed) { navigate('/cart'); return null; }
+
+
+
+  const setField = (key, val) => setCustomer((c) => ({ ...c, [key]: val }));
+
+
+
+  const handleSubmit = async (e) => {
+
     e.preventDefault();
-    setIsOrderPlaced(true);
-    // In a real app, send data to backend here.
-    setTimeout(() => {
-      clearCart();
-    }, 100);
+
+    setSubmitting(true);
+
+    setError(null);
+
+
+
+    try {
+
+      const order = await addOrder({
+
+        customer,
+
+        delivery,
+
+        payment,
+
+        items: items.map(({ cartItemId, id, name, price, quantity, isCustom, customDetails }) => ({
+
+          cartItemId,
+
+          id,
+
+          name,
+
+          price,
+
+          quantity,
+
+          isCustom,
+
+          customDetails,
+
+        })),
+
+        subtotal,
+
+        deliveryFee,
+
+        total,
+
+      });
+
+
+
+      setPlaced(order);
+
+      setTimeout(() => clearCart(), 100);
+
+    } catch (err) {
+
+      setError(err.response?.data?.message || 'Failed to place order. Is the backend running?');
+
+    } finally {
+
+      setSubmitting(false);
+
+    }
+
   };
 
-  if (isOrderPlaced) {
+
+
+  if (placed) {
+
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center bg-gray-50 px-4 py-12">
-        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
-          <CheckCircle2 className="h-12 w-12 text-green-600" />
-        </div>
-        <h1 className="text-4xl font-heading font-bold text-text-main mb-4 text-center">Order Confirmed!</h1>
-        <p className="text-text-muted text-center max-w-lg mb-4">
-          Thank you for choosing Ghazi Enterprise. Your order #GZ-{Math.floor(Math.random() * 100000)} has been placed successfully.
-        </p>
-        {customItems.length > 0 && (
-          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg text-center max-w-lg mb-8">
-            <h3 className="font-bold text-yellow-800 mb-1">Custom Quote Requested</h3>
-            <p className="text-sm text-yellow-700">Our sales team will review your custom requirements and contact you within 24 hours with a detailed quotation.</p>
-          </div>
-        )}
-        <div className="mt-4">
-          <Link to="/" className="px-8 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-md transition-colors">
-            Return to Home
-          </Link>
-        </div>
+
+      <div className="flex min-h-screen flex-col items-center justify-center bg-snow pt-28 text-center">
+
+        <CheckCircle2 className="h-16 w-16 text-mint" />
+
+        <h1 className="headline-lg mt-6">Order Confirmed!</h1>
+
+        <p className="mt-4 max-w-md text-smoke">Order <strong>{placed.id}</strong> received.</p>
+
+        {customItems.length > 0 && <p className="mt-4 max-w-md text-sm text-blaze">Custom quotes will be reviewed within 24h.</p>}
+
+        <Link to="/" className="btn-blaze mt-10">Back Home</Link>
+
       </div>
+
     );
+
   }
 
+
+
   return (
-    <div className="bg-gray-50 min-h-screen py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-heading font-bold text-text-main mb-8">Checkout</h1>
 
-        <form onSubmit={handlePlaceOrder} className="flex flex-col lg:flex-row gap-10">
-          
-          <div className="flex-1 space-y-8">
-            {/* Contact Information */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <h2 className="text-xl font-heading font-bold mb-6">Contact & Delivery Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-text-main">First Name *</label>
-                  <input required type="text" className="w-full border border-gray-300 rounded-md p-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-text-main">Last Name *</label>
-                  <input required type="text" className="w-full border border-gray-300 rounded-md p-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-                </div>
-                <div className="space-y-1 md:col-span-2">
-                  <label className="text-sm font-semibold text-text-main">Company Name (Optional)</label>
-                  <input type="text" className="w-full border border-gray-300 rounded-md p-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-                </div>
-                <div className="space-y-1 md:col-span-2">
-                  <label className="text-sm font-semibold text-text-main">Phone / WhatsApp *</label>
-                  <input required type="tel" className="w-full border border-gray-300 rounded-md p-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-                </div>
-                <div className="space-y-1 md:col-span-2">
-                  <label className="text-sm font-semibold text-text-main">Delivery Address *</label>
-                  <input required type="text" className="w-full border border-gray-300 rounded-md p-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-text-main">City *</label>
-                  <input required type="text" defaultValue="Karachi" className="w-full border border-gray-300 rounded-md p-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-text-main">Postal Code</label>
-                  <input type="text" className="w-full border border-gray-300 rounded-md p-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-                </div>
+    <div className="min-h-screen bg-snow pt-28">
+
+      <PageHeader tag="Checkout" title="Almost There" />
+
+      <form onSubmit={handleSubmit} className="container-main grid gap-10 pb-20 lg:grid-cols-[1fr_380px]">
+
+        <div className="space-y-6">
+
+          {error && (
+
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+
+          )}
+
+          <section className="card-light p-6 md:p-8">
+
+            <h2 className="font-display text-lg font-bold uppercase">Delivery Info</h2>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+
+              <Field label="First name *" value={customer.firstName} onChange={(e) => setField('firstName', e.target.value)} required />
+
+              <Field label="Last name *" value={customer.lastName} onChange={(e) => setField('lastName', e.target.value)} required />
+
+              <div className="sm:col-span-2">
+
+                <Field label="Address *" value={customer.address} onChange={(e) => setField('address', e.target.value)} required />
+
               </div>
+
+              <Field label="Phone *" type="tel" value={customer.phone} onChange={(e) => setField('phone', e.target.value)} required />
+
+              <Field label="City *" value={customer.city} onChange={(e) => setField('city', e.target.value)} required />
+
             </div>
 
-            {/* Delivery Method */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <h2 className="text-xl font-heading font-bold mb-6">Delivery Method</h2>
-              <div className="space-y-3">
-                <label className={clsx(
-                  "flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors",
-                  deliveryMethod === 'standard' ? "border-primary bg-primary/5" : "border-gray-200 hover:border-gray-300"
-                )}>
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="radio" name="delivery" value="standard" 
-                      checked={deliveryMethod === 'standard'} onChange={() => setDeliveryMethod('standard')}
-                      className="w-4 h-4 text-primary focus:ring-primary"
-                    />
-                    <div>
-                      <span className="block font-bold text-text-main">Standard Delivery</span>
-                      <span className="text-xs text-text-muted">2-3 Business Days</span>
-                    </div>
-                  </div>
-                  <span className="font-bold">₨ 500</span>
-                </label>
-                <label className={clsx(
-                  "flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors",
-                  deliveryMethod === 'express' ? "border-primary bg-primary/5" : "border-gray-200 hover:border-gray-300"
-                )}>
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="radio" name="delivery" value="express" 
-                      checked={deliveryMethod === 'express'} onChange={() => setDeliveryMethod('express')}
-                      className="w-4 h-4 text-primary focus:ring-primary"
-                    />
-                    <div>
-                      <span className="block font-bold text-text-main">Express Delivery</span>
-                      <span className="text-xs text-text-muted">Same Day (Karachi Only)</span>
-                    </div>
-                  </div>
-                  <span className="font-bold">₨ 1000</span>
-                </label>
-              </div>
+          </section>
+
+          <section className="card-light p-6 md:p-8">
+
+            <h2 className="font-display text-lg font-bold uppercase">Delivery</h2>
+
+            <div className="mt-4 space-y-3">
+
+              <Radio checked={delivery === 'standard'} onChange={() => setDelivery('standard')} title="Standard (2–3 days)" price="Rs 500" />
+
+              <Radio checked={delivery === 'express'} onChange={() => setDelivery('express')} title="Express (same day)" price="Rs 1,000" />
+
             </div>
 
-            {/* Payment Method */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <h2 className="text-xl font-heading font-bold mb-6">Payment Method</h2>
-              <div className="space-y-3">
-                <label className={clsx(
-                  "flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors",
-                  paymentMethod === 'cod' ? "border-primary bg-primary/5" : "border-gray-200 hover:border-gray-300"
-                )}>
-                  <input 
-                    type="radio" name="payment" value="cod" 
-                    checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')}
-                    className="w-4 h-4 text-primary focus:ring-primary"
-                  />
-                  <span className="font-bold text-text-main">Cash on Delivery (COD)</span>
-                </label>
-                <label className={clsx(
-                  "flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors",
-                  paymentMethod === 'bank' ? "border-primary bg-primary/5" : "border-gray-200 hover:border-gray-300"
-                )}>
-                  <input 
-                    type="radio" name="payment" value="bank" 
-                    checked={paymentMethod === 'bank'} onChange={() => setPaymentMethod('bank')}
-                    className="w-4 h-4 text-primary focus:ring-primary"
-                  />
-                  <span className="font-bold text-text-main">Direct Bank Transfer</span>
-                </label>
-              </div>
-              {paymentMethod === 'bank' && (
-                <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-md text-sm text-text-muted">
-                  Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your order will not be shipped until the funds have cleared in our account.
-                </div>
-              )}
+          </section>
+
+          <section className="card-light p-6 md:p-8">
+
+            <h2 className="font-display text-lg font-bold uppercase">Payment</h2>
+
+            <div className="mt-4 space-y-3">
+
+              <Radio checked={payment === 'cod'} onChange={() => setPayment('cod')} title="Cash on delivery" />
+
+              <Radio checked={payment === 'bank'} onChange={() => setPayment('bank')} title="Bank transfer" />
+
             </div>
-          </div>
 
-          {/* Order Summary Sidebar */}
-          <div className="lg:w-96 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 sticky top-28">
-              <h3 className="font-heading font-bold text-xl mb-6 flex items-center gap-2">
-                <PackageCheck className="h-5 w-5 text-primary" /> Order Summary
-              </h3>
+          </section>
 
-              <div className="space-y-4 mb-6 max-h-[40vh] overflow-y-auto pr-2">
-                {items.map(item => (
-                  <div key={item.cartItemId} className="flex justify-between items-start gap-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                    <div>
-                      <h4 className="text-sm font-bold text-text-main line-clamp-1">{item.name}</h4>
-                      <p className="text-xs text-text-muted">Qty: {item.quantity}</p>
-                      {item.isCustom && <span className="text-xs font-bold text-secondary">Quote Pending</span>}
-                    </div>
-                    {!item.isCustom && (
-                      <span className="text-sm font-bold text-text-main">₨ {item.price * item.quantity}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
+        </div>
 
-              <div className="space-y-3 text-sm mb-6 pb-6 border-t pt-4 border-gray-200">
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Subtotal</span>
-                  <span className="font-bold text-text-main">₨ {subtotal}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Delivery</span>
-                  <span className="font-bold text-text-main">₨ {deliveryCharges}</span>
-                </div>
-              </div>
+        <aside className="card-light h-fit p-6 lg:sticky lg:top-28">
 
-              <div className="flex justify-between items-end mb-8">
-                <span className="font-heading font-bold text-lg">Total</span>
-                <span className="font-bold text-3xl text-primary">₨ {total}</span>
-              </div>
+          <h2 className="font-display font-bold uppercase">Summary</h2>
 
-              <button 
-                type="submit"
-                className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 px-4 rounded-md transition-colors shadow-lg shadow-primary/20"
-              >
-                Place Order Now
-              </button>
-            </div>
-          </div>
+          <ul className="mt-4 max-h-40 space-y-3 overflow-y-auto text-sm">
 
-        </form>
-      </div>
+            {items.map((item) => (
+
+              <li key={item.cartItemId} className="flex justify-between">
+
+                <span className="line-clamp-1">{item.name}</span>
+
+                {!item.isCustom && <span className="font-bold">Rs {(item.price * item.quantity).toLocaleString()}</span>}
+
+              </li>
+
+            ))}
+
+          </ul>
+
+          <div className="my-4 h-px bg-line-light" />
+
+          <div className="flex justify-between text-sm"><span className="text-smoke">Total</span><span className="font-display text-3xl font-extrabold text-blaze">Rs {total.toLocaleString()}</span></div>
+
+          <button type="submit" disabled={submitting} className="btn-blaze mt-6 w-full !rounded-2xl">
+
+            {submitting ? 'Placing order…' : 'Place Order'}
+
+          </button>
+
+        </aside>
+
+      </form>
+
     </div>
+
   );
+
 }
+
+
+
+function Field({ label, ...props }) {
+
+  return (<div><label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-smoke">{label}</label><input className="input-field" {...props} /></div>);
+
+}
+
+
+
+function Radio({ checked, onChange, title, price }) {
+
+  return (
+
+    <label className={clsx('flex cursor-pointer items-center justify-between rounded-xl border-2 p-4', checked ? 'border-blaze bg-blaze/5' : 'border-line-light')}>
+
+      <div className="flex items-center gap-3"><input type="radio" checked={checked} onChange={onChange} className="accent-blaze" /><span className="font-bold">{title}</span></div>
+
+      {price && <span className="font-bold text-blaze">{price}</span>}
+
+    </label>
+
+  );
+
+}
+

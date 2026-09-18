@@ -2,35 +2,34 @@ import { create } from 'zustand';
 import { loginUser } from '../services/api';
 
 export const useAuthStore = create((set) => ({
-  user: JSON.parse(localStorage.getItem('ghazi_user')) || null,
-  token: localStorage.getItem('ghazi_token') || null,
+  user: JSON.parse(localStorage.getItem('ghazi_admin_user') || 'null'),
   loading: false,
   error: null,
 
   login: async (email, password) => {
     set({ loading: true, error: null });
     try {
-      const res = await loginUser({ email, password });
-      const { token, user } = res.data;
-      localStorage.setItem('ghazi_token', token);
-      localStorage.setItem('ghazi_user', JSON.stringify(user));
-      set({ user, token, loading: false });
+      const { data } = await loginUser({ email, password });
+
+      if (data.user?.role !== 'admin') {
+        set({ loading: false, error: 'Admin access only' });
+        return { success: false };
+      }
+
+      localStorage.setItem('ghazi_token', data.token);
+      localStorage.setItem('ghazi_admin_user', JSON.stringify(data.user));
+      set({ user: data.user, loading: false });
       return { success: true };
     } catch (err) {
-      const msg = err.response?.data?.message || 'Login failed';
-      set({ loading: false, error: msg });
-      return { success: false, message: msg };
+      const message = err.response?.data?.message || 'Invalid email or password';
+      set({ loading: false, error: message });
+      return { success: false };
     }
   },
 
   logout: () => {
     localStorage.removeItem('ghazi_token');
-    localStorage.removeItem('ghazi_user');
-    set({ user: null, token: null });
-  },
-
-  isAdmin: () => {
-    const user = JSON.parse(localStorage.getItem('ghazi_user'));
-    return user?.role === 'admin';
+    localStorage.removeItem('ghazi_admin_user');
+    set({ user: null });
   },
 }));
